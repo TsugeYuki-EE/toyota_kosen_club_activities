@@ -1,5 +1,6 @@
 const { spawn, spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const net = require("node:net");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const { createProxyMiddleware } = require("http-proxy-middleware");
@@ -77,6 +78,48 @@ function runWithStatus(command, args, env) {
 	return result.status === 0;
 }
 
+function canConnectPostgres(host, port) {
+	return new Promise((resolve) => {
+		const socket = net.createConnection({ host, port });
+		let finished = false;
+
+		const done = (ok) => {
+			if (finished) {
+				return;
+			}
+			finished = true;
+			socket.destroy();
+			resolve(ok);
+		};
+
+		socket.once("connect", () => done(true));
+		socket.once("error", () => done(false));
+		socket.setTimeout(1000, () => done(false));
+	});
+}
+
+async function waitForPostgres() {
+	const maxAttempts = 120;
+	const host = "postgres";
+	const port = 5432;
+
+	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+		const ok = await canConnectPostgres(host, port);
+		if (ok) {
+			console.log("postgres is ready");
+			return;
+		}
+
+		if (attempt % 10 === 0) {
+			console.warn(`waiting for postgres... (${attempt}/${maxAttempts})`);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+
+	throw new Error("postgres did not become ready in time");
+}
+
 function launchStandaloneApp(label, appDir, port, env) {
 	const nestedStandalonePath = `.next/standalone/${appDir.replace(/\\/g, "/")}/server.js`;
 	const serverEntry = fs.existsSync(`${appDir}/${nestedStandalonePath}`)
@@ -112,7 +155,9 @@ function buildAppEnv(baseEnv, dbUrl, adminKey) {
 	};
 }
 
-function startInternalApps() {
+async function startInternalApps() {
+	await waitForPostgres();
+
 	const handballEnv = buildAppEnv(
 		process.env,
 		HANDBALL_LOCAL_DB_URL,
@@ -245,13 +290,15 @@ function shutdown() {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-try {
-	startInternalApps();
+(async () => {
+	try {
+		await startInternalApps();
 
-	app.listen(LISTEN_PORT, "0.0.0.0", () => {
-		console.log(`gateway listening on ${LISTEN_PORT}`);
-	});
-} catch (error) {
-	console.error(error);
-	process.exit(1);
-}
+		app.listen(LISTEN_PORT, "0.0.0.0", () => {
+			console.log(`gateway listening on ${LISTEN_PORT}`);
+		});
+	} catch (error) {
+		console.error(error);
+		process.exit(1);
+	}
+})();

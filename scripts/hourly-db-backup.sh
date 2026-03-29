@@ -16,6 +16,16 @@ MAX_FILES=72
 
 mkdir -p "$HANDBALL_DIR" "$TABLE_TENNIS_DIR"
 
+echo "[$(date -Iseconds)] waiting for postgres..."
+until PGPASSWORD="$POSTGRES_PASSWORD" pg_isready \
+  --host "$PGHOST" \
+  --port "$PGPORT" \
+  --username "$POSTGRES_USER" \
+  --dbname postgres >/dev/null 2>&1; do
+  sleep 2
+done
+echo "[$(date -Iseconds)] postgres is ready"
+
 backup_one() {
   label="$1"
   db_name="$2"
