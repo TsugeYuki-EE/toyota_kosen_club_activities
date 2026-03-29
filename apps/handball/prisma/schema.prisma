@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// 部員の役割です。管理画面の表示や入力者区分に使います。
+enum Role {
+  PLAYER
+  MANAGER
+  COACH
+  ADMIN
+}
+
+/// 出席の状態です。カレンダー集計に使います。
+enum AttendanceStatus {
+  ATTEND
+  ABSENT
+  LATE
+  UNKNOWN
+}
+
+/// 共有リンクの種類です。
+enum InputType {
+  ATTENDANCE
+  WEIGHT
+}
+
+/// 出席イベントの種別です。
+enum AttendanceEventType {
+  PRACTICE
+  MATCH
+}
+
+/// 試合の時間帯区分です。
+enum MatchPeriod {
+  FIRST_HALF
+  SECOND_HALF
+}
+
+/// 部員、マネージャー、コーチの基本情報です。
+model Member {
+  id                  String             @id @default(cuid())
+  name                String
+  nickname            String?            @unique
+  grade               String?
+  yearlyGoal          String?
+  monthlyGoal         String?
+  canAccessAdmin      Boolean            @default(false)
+  role                Role               @default(PLAYER)
+  createdAt           DateTime           @default(now())
+  attendances         AttendanceRecord[]
+  weights             WeightRecord[]
+  tokens              InputToken[]
+  createdPracticeMenus PracticeMenu[]    @relation("CreatedPracticeMenus")
+  playerScores        PlayerMatchScore[]
+  playerMatchPeriodStats PlayerMatchPeriodStat[]
+  releaseNotes        ReleaseNote[]      @relation("ReleasesCreatedBy")
+  announcements       AdminAnnouncement[] @relation("AnnouncementsCreatedBy")
+  feedbacks           Feedback[]
+}
+
+/// 出席確認したいイベント本体です。
+model AttendanceEvent {
+  id          String             @id @default(cuid())
+  eventType   AttendanceEventType @default(PRACTICE)
+  title       String
+  scheduledAt DateTime
+  matchOpponent String?
+  matchDetail String?
+  note        String?
+  createdAt   DateTime           @default(now())
+  records     AttendanceRecord[]
+  tokens      InputToken[]
+  matches     MatchRecord[]
+  draft       MatchScoreDraft?
+}
+
+model AttendanceRecord {
+  id         String           @id @default(cuid())
+  eventId    String
+  memberId   String
+  status     AttendanceStatus @default(UNKNOWN)
+  comment    String?
+  submittedAt DateTime        @default(now())
+  event      AttendanceEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member     Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+}
+
+/// 体重履歴です。
+model WeightRecord {
+  id          String   @id @default(cuid())
+  memberId    String
+  weightKg    Float
+  recordedOn  DateTime @default(now())
+  note        String?
+  submittedAt DateTime @default(now())
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+/// 試合のスコア記録です。
+model MatchRecord {
+  id           String             @id @default(cuid())
+  attendanceEventId String?
+  opponent     String
+  matchDate    DateTime
+  ourScore     Int
+  theirScore   Int
+  note         String?
+  createdAt    DateTime           @default(now())
+  attendanceEvent AttendanceEvent? @relation(fields: [attendanceEventId], references: [id], onDelete: SetNull)
+  playerScores PlayerMatchScore[]
+  periodScores MatchPeriodScore[]
+  periodPlayerStats PlayerMatchPeriodStat[]
+   incidents        MatchPeriodIncident[]
+}
+
+/// 練習内容の共有用データです。
+model PracticeMenu {
+  id               String   @id @default(cuid())
+  title            String
+  practiceDate     DateTime
+  menuText         String
+  detail           String?
+  createdByMemberId String?
+  createdAt        DateTime @default(now())
+  createdBy        Member?  @relation("CreatedPracticeMenus", fields: [createdByMemberId], references: [id], onDelete: SetNull)
+}
+
+/// 部員ごとの試合得点です。
+model PlayerMatchScore {
+  id          String    @id @default(cuid())
+  memberId    String
+  matchId     String
+  goals       Int       @default(0)
+  shotAttempts Int      @default(0)
+  isGoalkeeper Boolean  @default(false)
+  note        String?
+  submittedAt DateTime  @default(now())
+  member      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  match       MatchRecord @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, matchId])
+}
+
+/// 前半/後半ごとのチームスコアです。
+model MatchPeriodScore {
+  id         String     @id @default(cuid())
+  matchId    String
+  period     MatchPeriod
+  ourScore   Int        @default(0)
+  theirScore Int        @default(0)
+  quickCount Int        @default(0)
+  quickSuccessCount Int @default(0)
+  leftCount  Int        @default(0)
+  leftSuccessCount Int  @default(0)
+  centerCount Int       @default(0)
+  centerSuccessCount Int @default(0)
+  pivotCount Int        @default(0)
+  pivotSuccessCount Int @default(0)
+  reboundCount Int      @default(0)
+  reboundSuccessCount Int @default(0)
+  sevenMeterCount Int   @default(0)
+  sevenMeterSuccessCount Int @default(0)
+  savedAt    DateTime   @default(now())
+  match      MatchRecord @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, period])
+}
+
+/// 前半/後半ごとの選手スタッツです。
+model PlayerMatchPeriodStat {
+  id          String     @id @default(cuid())
+  matchId     String
+  memberId    String
+  period      MatchPeriod
+  shotAttempts Int       @default(0)
+  goals       Int        @default(0)
+  quickAttempts Int      @default(0)
+  quickGoals Int         @default(0)
+  leftAttempts Int       @default(0)
+  leftGoals Int          @default(0)
+  centerAttempts Int     @default(0)
+  centerGoals Int        @default(0)
+  pivotAttempts Int      @default(0)
+  pivotGoals Int         @default(0)
+  reboundAttempts Int    @default(0)
+  reboundGoals Int       @default(0)
+  sevenMeterAttempts Int @default(0)
+  sevenMeterGoals Int    @default(0)
+  isGoalkeeper Boolean   @default(false)
+  savedAt     DateTime   @default(now())
+  match       MatchRecord @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  member      Member      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, memberId, period])
+  @@index([matchId, period])
+}
+
+/// 前半/後半ごとの退場・警告記録です。
+model MatchPeriodIncident {
+  id          String     @id @default(cuid())
+  matchId     String
+  period      MatchPeriod
+  team        String     // "OUR" or "OPPONENT"
+  kind        String     // "TWO_MIN" or "YELLOW"
+  minute      Int
+  playerName  String?
+  savedAt     DateTime   @default(now())
+  match       MatchRecord @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId, period])
+}
+
+/// 試合スコア入力のドラフト自動保存です。
+model MatchScoreDraft {
+  id                  String         @id @default(cuid())
+  attendanceEventId   String         @unique
+  draftJson           Json
+  updatedAt           DateTime       @default(now()) @updatedAt
+  attendanceEvent     AttendanceEvent @relation(fields: [attendanceEventId], references: [id], onDelete: Cascade)
+}
+
+/// 部員へ配布する入力用の共有リンクです。
+model InputToken {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  type       InputType
+  memberId   String
+  eventId    String?
+  expiresAt  DateTime
+  isActive   Boolean   @default(true)
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  event      AttendanceEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+}
+
+/// リリースノートです。管理者のみが作成できます。
+model ReleaseNote {
+  id          String   @id @default(cuid())
+  version     String   @unique
+  title       String
+  content     String
+  createdByMemberId String
+  createdAt  DateTime @default(now())
+  createdBy  Member   @relation("ReleasesCreatedBy", fields: [createdByMemberId], references: [id], onDelete: Cascade)
+}
+
+/// 部員がアプリ改善のために送るフィードバックです。
+model Feedback {
+  id                 String   @id @default(cuid())
+  memberId           String
+  memberNameSnapshot String
+  content            String
+  createdAt          DateTime @default(now())
+  member             Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+/// 管理者が期間指定で表示する通達メッセージです。
+model AdminAnnouncement {
+  id                String   @id @default(cuid())
+  message           String
+  startsAt          DateTime
+  endsAt            DateTime
+  createdByMemberId String
+  createdAt         DateTime @default(now())
+  createdBy         Member   @relation("AnnouncementsCreatedBy", fields: [createdByMemberId], references: [id], onDelete: Cascade)
+
+  @@index([startsAt, endsAt])
+  @@index([createdAt])
+}

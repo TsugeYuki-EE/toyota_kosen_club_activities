@@ -1,0 +1,13 @@
+{
+  "name": "toyota-kosen-club-activities",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node gateway/server.cjs"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.3"
+  }
+}

@@ -1,0 +1,245 @@
+.page {
+  min-height: 100vh;
+  padding: 30px 18px 70px;
+  background: linear-gradient(180deg, #f2f8fc 0%, #ffffff 45%);
+  display: grid;
+  gap: 18px;
+}
+
+.header {
+  display: grid;
+  gap: 6px;
+}
+
+.header h1 {
+  color: #161616;
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.header p {
+  color: #345166;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.primaryLink,
+.secondaryLink,
+.button,
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #c8b4b9;
+  font: inherit;
+  font-weight: 700;
+}
+
+.primaryLink,
+.button {
+  background: #161616;
+  border-color: #161616;
+  color: #ffffff;
+}
+
+.secondaryLink {
+  background: #ffffff;
+  color: #161616;
+}
+
+.dangerButton {
+  background: #d73939;
+  border-color: #c62b2b;
+  color: #ffffff;
+}
+
+.message,
+.error {
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid;
+}
+
+.message {
+  border-color: #aad5ba;
+  color: #205d34;
+  background: #f2fff5;
+}
+
+.error {
+  border-color: #eaa8a8;
+  color: #8f1d1d;
+  background: #fff1f1;
+}
+
+.grid,
+.cards,
+.metrics,
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.card,
+.metricCard,
+.chartCard {
+  background: #ffffff;
+  border: 1px solid #d8e3ea;
+  border-radius: 14px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.memberName {
+  color: #161616;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.meta {
+  color: #587184;
+  font-size: 14px;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.form label {
+  display: grid;
+  gap: 4px;
+  color: #4a3f42;
+  font-size: 14px;
+}
+
+.form input,
+.form select,
+.form textarea {
+  font: inherit;
+  border-radius: 8px;
+  border: 1px solid #c8b4b9;
+  padding: 10px;
+}
+
+.inlineActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metricValue {
+  color: #161616;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.metricLabel {
+  color: #587184;
+  font-size: 13px;
+}
+
+.barList {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.barRow {
+  display: grid;
+  gap: 4px;
+}
+
+.barHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #161616;
+  font-size: 14px;
+}
+
+.barTrack {
+  width: 100%;
+  height: 12px;
+  background: #ecf2f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c3192d 0%, #68b7df 100%);
+}
+
+.statusStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.attend {
+  background: #daf4e3;
+  color: #1e6b37;
+}
+
+.late {
+  background: #fff2d8;
+  color: #8a5a00;
+}
+
+.absent {
+  background: #ffe1e1;
+  color: #983131;
+}
+
+.unknown {
+  background: #e9eef2;
+  color: #506473;
+}
+
+.tableList {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  color: #2e4a5e;
+}
+
+.empty {
+  color: #587184;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 14px 40px;
+  }
+
+  .nav,
+  .inlineActions {
+    display: grid;
+  }
+}

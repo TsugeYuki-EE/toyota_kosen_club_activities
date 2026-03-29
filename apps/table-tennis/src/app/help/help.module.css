@@ -1,0 +1,180 @@
+.main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  display: grid;
+  gap: 20px;
+}
+
+.header {
+  background: linear-gradient(135deg, #f2f8ff 0%, #ffffff 72%);
+  border: 1px solid #d9e5ef;
+  border-radius: 16px;
+  padding: 24px;
+  display: grid;
+  gap: 10px;
+}
+
+.header h1 {
+  font-size: clamp(24px, 2.6vw, 34px);
+  color: #1f425c;
+}
+
+.header p {
+  color: #34556f;
+  line-height: 1.65;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.primaryButton {
+  background: #c3192d;
+  color: #ffffff;
+}
+
+.primaryButton:hover {
+  background: #a71527;
+}
+
+.secondaryButton {
+  background: #ffffff;
+  color: #c3192d;
+  border-color: #b9d1ea;
+}
+
+.secondaryButton:hover {
+  background: #fff4f6;
+}
+
+.noteCard {
+  background: #ffffff;
+  border: 1px solid #e4d6da;
+  border-radius: 14px;
+  padding: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.noteCard h2 {
+  font-size: 18px;
+  color: #27485f;
+}
+
+.noteCard p {
+  color: #36566e;
+  line-height: 1.7;
+}
+
+.guideSection {
+  display: grid;
+  gap: 14px;
+}
+
+.groupCard {
+  background: #ffffff;
+  border: 1px solid #e4d6da;
+  border-radius: 14px;
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.groupCard h2 {
+  font-size: 20px;
+  color: #1f425c;
+}
+
+.guideList {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.guideItem {
+  border: 1px solid #e1e9f0;
+  background: #fbfdff;
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.itemHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.itemHeader h3 {
+  font-size: 16px;
+  color: #23455d;
+}
+
+.routeLabel {
+  font-family: var(--font-geist-mono), Consolas, Monaco, monospace;
+  font-size: 12px;
+  color: #527188;
+  background: #fdf1f3;
+  border: 1px solid #d9e6f0;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.summary {
+  color: #33546b;
+  line-height: 1.65;
+}
+
+.steps {
+  margin-left: 1.2em;
+  color: #33546b;
+  line-height: 1.6;
+}
+
+.pageLink {
+  display: inline-flex;
+  width: fit-content;
+  color: #1d6fb7;
+  font-weight: 600;
+}
+
+.pageLink:hover {
+  text-decoration: underline;
+}
+
+.dynamicNote {
+  font-size: 13px;
+  color: #58758a;
+}
+
+@media (max-width: 720px) {
+  .main {
+    padding: 20px 14px 36px;
+  }
+
+  .header,
+  .noteCard,
+  .groupCard {
+    padding: 16px;
+  }
+}

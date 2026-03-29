@@ -1,0 +1,13 @@
+# Node.js の依存関係とビルド成果物はイメージ内で作るため除外します。
+node_modules
+.next
+
+# ローカル専用の DB やログはコンテナへ持ち込みません。
+prisma/dev.db
+prisma/dev.db-journal
+npm-debug.log*
+
+# Git とエディタ設定は不要です。
+.git
+.gitignore
+.vscode

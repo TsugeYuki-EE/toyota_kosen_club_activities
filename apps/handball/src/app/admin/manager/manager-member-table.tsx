@@ -1,0 +1,157 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import styles from "../admin-dashboard.module.css";
+
+type ManagerMemberRow = {
+  id: string;
+  name: string;
+  nickname: string | null;
+  grade: string | null;
+  role: "PLAYER" | "MANAGER" | "COACH" | "ADMIN";
+  yearlyGoal: string | null;
+  monthlyGoal: string | null;
+  attendanceRate: number | null;
+  scoringRate: number | null;
+  latestWeightKg: number | null;
+  isLatestWeightToday: boolean;
+};
+
+type ManagerMemberTableProps = {
+  members: ManagerMemberRow[];
+};
+
+function roleLabel(role: ManagerMemberRow["role"]): string {
+  if (role === "ADMIN") return "管理者";
+  if (role === "COACH") return "コーチ";
+  if (role === "MANAGER") return "マネージャー";
+  return "プレイヤー";
+}
+
+export function ManagerMemberTable({ members }: ManagerMemberTableProps) {
+  const [showAttendanceRate, setShowAttendanceRate] = useState(false);
+  const [showScoringRate, setShowScoringRate] = useState(false);
+  const [showLatestWeight, setShowLatestWeight] = useState(false);
+  const [showYearlyGoal, setShowYearlyGoal] = useState(false);
+  const [showMonthlyGoal, setShowMonthlyGoal] = useState(false);
+
+  const colSpan = useMemo(() => {
+    let count = 4;
+    if (showAttendanceRate) count += 1;
+    if (showScoringRate) count += 1;
+    if (showLatestWeight) count += 1;
+    if (showYearlyGoal) count += 1;
+    if (showMonthlyGoal) count += 1;
+    return count;
+  }, [showAttendanceRate, showScoringRate, showLatestWeight, showYearlyGoal, showMonthlyGoal]);
+
+  return (
+    <>
+      <div className={styles.managerFilters}>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={showAttendanceRate}
+            onChange={(event) => setShowAttendanceRate(event.target.checked)}
+          />
+          <span>出席率</span>
+        </label>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={showScoringRate}
+            onChange={(event) => setShowScoringRate(event.target.checked)}
+          />
+          <span>得点率</span>
+        </label>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={showLatestWeight}
+            onChange={(event) => setShowLatestWeight(event.target.checked)}
+          />
+          <span>最新体重</span>
+        </label>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={showYearlyGoal}
+            onChange={(event) => setShowYearlyGoal(event.target.checked)}
+          />
+          <span>一年の目標</span>
+        </label>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={showMonthlyGoal}
+            onChange={(event) => setShowMonthlyGoal(event.target.checked)}
+          />
+          <span>その月の目標</span>
+        </label>
+      </div>
+
+      <div className={styles.memberTableWrap}>
+        <table className={styles.memberTable}>
+          <thead>
+            <tr>
+              <th>ニックネーム</th>
+              <th>学年</th>
+              <th>役職</th>
+              {showAttendanceRate ? <th>出席率</th> : null}
+              {showScoringRate ? <th>得点率</th> : null}
+              {showLatestWeight ? <th>最新体重</th> : null}
+              {showYearlyGoal ? <th>一年の目標</th> : null}
+              {showMonthlyGoal ? <th>その月の目標</th> : null}
+              <th>アクション</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((member) => (
+              <tr key={member.id}>
+                <td>
+                  <Link className={styles.memberLink} href={`/admin/members/${member.id}`}>
+                    {member.nickname || member.name}
+                  </Link>
+                </td>
+                <td>{member.grade || "-"}</td>
+                <td>{roleLabel(member.role)}</td>
+                {showAttendanceRate ? (
+                  <td>
+                    {member.attendanceRate == null ? "-" : `${member.attendanceRate.toFixed(1)}%`}
+                  </td>
+                ) : null}
+                {showScoringRate ? (
+                  <td>{member.scoringRate == null ? "-" : `${member.scoringRate.toFixed(1)}%`}</td>
+                ) : null}
+                {showLatestWeight ? (
+                  <td>
+                    {member.latestWeightKg == null ? (
+                      "-"
+                    ) : (
+                      <span className={member.isLatestWeightToday ? styles.todayWeightHighlight : undefined}>
+                        {`${member.latestWeightKg.toFixed(1)}kg`}
+                      </span>
+                    )}
+                  </td>
+                ) : null}
+                {showYearlyGoal ? <td>{member.yearlyGoal || "-"}</td> : null}
+                {showMonthlyGoal ? <td>{member.monthlyGoal || "-"}</td> : null}
+                <td>
+                  <Link className={styles.tableLinkButton} href={`/admin/members/${member.id}`}>
+                    詳細
+                  </Link>
+                </td>
+              </tr>
+            ))}
+            {members.length === 0 ? (
+              <tr>
+                <td colSpan={colSpan}>部員データがありません。</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}

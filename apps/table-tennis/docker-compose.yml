@@ -1,0 +1,12 @@
+﻿services:
+  table-tennis-notes:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_VIEW_KEY: ${ADMIN_VIEW_KEY:-toyota-table-tennis-admin}
+      NEXT_PUBLIC_APP_BASE_URL: ${NEXT_PUBLIC_APP_BASE_URL:-http://localhost:3000}
+

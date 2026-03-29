@@ -1,0 +1,124 @@
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead {
+  background-color: #f0f0f0;
+  border-bottom: 2px solid #ddd;
+}
+
+.table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+}
+
+.sortButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0066cc;
+  font-size: inherit;
+  font-weight: inherit;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.sortButton:hover {
+  color: #0052a3;
+  text-decoration: underline;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+.table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.table td {
+  padding: 12px;
+  vertical-align: top;
+}
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.name {
+  font-weight: 600;
+  color: #333;
+}
+
+.nickname {
+  font-size: 12px;
+  color: #666;
+}
+
+.grade {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+}
+
+.goalCell {
+  max-width: 300px;
+}
+
+.goalText {
+  color: #333;
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.emptyGoal {
+  color: #aaa;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+@media (max-width: 768px) {
+  .tableContainer {
+    font-size: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px;
+  }
+
+  .nameCell {
+    gap: 2px;
+  }
+
+  .name {
+    font-size: 14px;
+  }
+
+  .nickname {
+    font-size: 11px;
+  }
+
+  .grade {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,181 @@
+.page {
+  min-height: 100vh;
+  padding: 28px 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, #fff6f7 0%, #eef7ff 45%, #fefcf5 100%);
+}
+
+.main {
+  width: min(920px, 100%);
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  background: #ffffff;
+  border: 1px solid #d7e4ec;
+  border-radius: 14px;
+  padding: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.header h1 {
+  font-size: clamp(24px, 4vw, 34px);
+  color: #161616;
+}
+
+.header p {
+  color: #4a3f42;
+}
+
+.notice,
+.error {
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid;
+}
+
+.notice {
+  border-color: #a8cde0;
+  color: #1d4f69;
+  background: #fff1f4;
+}
+
+.error {
+  border-color: #e7aaaa;
+  color: #8d1e1e;
+  background: #fff2f2;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #d7e4ec;
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.loginCard {
+  justify-items: center;
+}
+
+.loginCard h2,
+.loginCard .meta {
+  text-align: center;
+}
+
+.loginCard .form {
+  width: min(360px, 100%);
+}
+
+.card h2 {
+  color: #161616;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.form label {
+  display: grid;
+  gap: 4px;
+  color: #4a3f42;
+  font-size: 14px;
+}
+
+.form input,
+.form select,
+.form button {
+  font: inherit;
+  border: 1px solid #c8b4b9;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.form button {
+  background: #161616;
+  border-color: #161616;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.meta {
+  color: #4e6a7d;
+  font-size: 14px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 40, 55, 0.52);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 2400;
+}
+
+.modalCard {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border: 1px solid #d7e4ec;
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.modalCard h3 {
+  color: #161616;
+  font-size: 20px;
+}
+
+.modalLabel {
+  display: grid;
+  gap: 4px;
+  color: #4a3f42;
+  font-size: 14px;
+}
+
+.modalLabel input {
+  font: inherit;
+  border: 1px solid #c8b4b9;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primaryButton,
+.secondaryButton {
+  font: inherit;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #c8b4b9;
+  font-weight: 700;
+}
+
+.primaryButton {
+  background: #161616;
+  border-color: #161616;
+  color: #ffffff;
+}
+
+.secondaryButton {
+  background: #ffffff;
+  color: #161616;
+}

@@ -1,0 +1,109 @@
+.page {
+  min-height: 100vh;
+  padding: 34px 16px 72px;
+  background: linear-gradient(180deg, #f2f8fc 0%, #ffffff 45%);
+  display: grid;
+  place-items: center;
+}
+
+.main {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #d8e3ea;
+  border-radius: 12px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.card h1 {
+  color: #161616;
+  font-size: clamp(22px, 4vw, 30px);
+}
+
+.card p {
+  color: #345166;
+  line-height: 1.7;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.form label {
+  display: grid;
+  gap: 6px;
+  color: #4a3f42;
+  font-size: 14px;
+}
+
+.form textarea,
+.form button,
+.backLink {
+  font: inherit;
+  border-radius: 8px;
+  border: 1px solid #c8b4b9;
+  padding: 10px;
+}
+
+.form textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.form button,
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  text-decoration: none;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.form button {
+  background: #161616;
+  border-color: #161616;
+  color: #ffffff;
+}
+
+.backLink {
+  background: #ffffff;
+  color: #161616;
+}
+
+.message,
+.error {
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid;
+}
+
+.message {
+  border-color: #aad5ba;
+  color: #205d34;
+  background: #f2fff5;
+}
+
+.error {
+  border-color: #eaa8a8;
+  color: #8f1d1d;
+  background: #fff1f1;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 18px 10px 38px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+}

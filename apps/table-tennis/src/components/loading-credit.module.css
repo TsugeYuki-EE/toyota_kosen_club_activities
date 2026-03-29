@@ -1,0 +1,18 @@
+.creditWrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2200;
+  border-top: 1px solid #d8c2c8;
+  background: rgba(20, 11, 13, 0.92);
+  backdrop-filter: blur(2px);
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.creditText {
+  color: #f1dbe0;
+  font-size: 12px;
+  line-height: 1.5;
+}

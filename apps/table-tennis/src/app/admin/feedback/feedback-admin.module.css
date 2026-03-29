@@ -1,0 +1,138 @@
+.page {
+  min-height: 100vh;
+  padding: 30px 18px 70px;
+  background: linear-gradient(180deg, #f2f8fc 0%, #ffffff 45%);
+  display: grid;
+  gap: 18px;
+}
+
+.header h1 {
+  color: #161616;
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.header p {
+  color: #345166;
+  margin-top: 4px;
+}
+
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  font: inherit;
+  border-radius: 8px;
+  border: 1px solid #161616;
+  background: #161616;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: center;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #d8e3ea;
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.empty {
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid #bdd7e6;
+  color: #1f4860;
+  background: #f3faff;
+}
+
+.list {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.item {
+  border: 1px solid #d8e3ea;
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #fbfdff;
+}
+
+.meta {
+  color: #4a3f42;
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.content {
+  color: #161616;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.pagerMeta {
+  color: #3a596f;
+  font-size: 13px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.pagerButton,
+.pagerButtonDisabled {
+  min-width: 72px;
+  text-align: center;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid #bfd3e1;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.pagerButton {
+  color: #1e6eb2;
+  background: #ffffff;
+}
+
+.pagerButton:hover {
+  background: #f3f9ff;
+}
+
+.pagerButtonDisabled {
+  color: #8aa1b1;
+  background: #f3f6f9;
+  border-color: #d4e0e9;
+}
+
+.pagerCurrent {
+  color: #25485f;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 16px 10px 40px;
+    gap: 12px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+}

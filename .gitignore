@@ -1,0 +1,10 @@
+node_modules/
+**/node_modules/
+**/.next/
+
+.env
+.env.*
+apps/handball/.env
+apps/table-tennis/.env
+
+backups/
