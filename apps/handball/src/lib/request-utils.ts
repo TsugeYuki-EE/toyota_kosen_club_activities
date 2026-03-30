@@ -6,21 +6,8 @@ function normalizeBaseUrl(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
-function isLocalOnlyOrigin(value: string): boolean {
-  return /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(value);
-}
-
 // Render などのプロキシ配下でも外向きURLでリダイレクトできるようにします。
 export function getRequestOrigin(request: NextRequest): string {
-  const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || process.env.RENDER_EXTERNAL_URL;
-  if (configuredBaseUrl && !(process.env.NODE_ENV === "production" && isLocalOnlyOrigin(configuredBaseUrl))) {
-    return normalizeBaseUrl(configuredBaseUrl);
-  }
-
-  if (process.env.NODE_ENV === "production") {
-    return PRODUCTION_APP_FALLBACK_URL;
-  }
-
   const forwardedProto = request.headers.get("x-forwarded-proto");
   const forwardedHost = request.headers.get("x-forwarded-host");
   if (forwardedProto && forwardedHost) {
@@ -33,7 +20,12 @@ export function getRequestOrigin(request: NextRequest): string {
     return `${protocol}//${host}`;
   }
 
-  return request.nextUrl.origin;
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || process.env.RENDER_EXTERNAL_URL;
+  if (configuredBaseUrl) {
+    return normalizeBaseUrl(configuredBaseUrl);
+  }
+
+  return process.env.NODE_ENV === "production" ? PRODUCTION_APP_FALLBACK_URL : request.nextUrl.origin;
 }
 
 export function buildAppUrl(request: NextRequest, path: string): URL {

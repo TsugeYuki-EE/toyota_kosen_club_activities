@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const MEMBER_SESSION_COOKIE = "ttn_member_session";
@@ -42,12 +43,25 @@ export async function getSessionMember() {
   return member as SessionMember | null;
 }
 
-export async function setMemberSession(memberId: string) {
+function shouldUseSecureCookie(request?: NextRequest): boolean {
+  if (!request) {
+    return process.env.NODE_ENV === "production";
+  }
+
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  if (forwardedProto) {
+    return forwardedProto === "https";
+  }
+
+  return request.nextUrl.protocol === "https:";
+}
+
+export async function setMemberSession(memberId: string, request?: NextRequest) {
   const cookieStore = await cookies();
   cookieStore.set(MEMBER_SESSION_COOKIE, memberId, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(request),
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

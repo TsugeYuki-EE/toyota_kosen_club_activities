@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 303);
   }
 
-  await setMemberSession(member.id);
+  await setMemberSession(member.id, request);
 
   const successUrl = buildAppUrl(request, "/");
   successUrl.searchParams.set("ok", "login");

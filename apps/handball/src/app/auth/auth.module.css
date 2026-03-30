@@ -114,6 +114,25 @@
   font-size: 14px;
 }
 
+.backToSelectWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.backToSelectLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #bccdd8;
+  background: #ffffff;
+  color: #173246;
+  text-decoration: none;
+  font-weight: 700;
+}
+
 .modalOverlay {
   position: fixed;
   inset: 0;

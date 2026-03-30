@@ -12,6 +12,8 @@ type PageProps = {
 export default async function AuthPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const member = await getSessionMember();
+  const clubSelectorBaseUrl = process.env.PUBLIC_BASE_URL || "http://localhost:3000";
+  const clubSelectorUrl = `${clubSelectorBaseUrl.replace(/\/$/, "")}/switch-club`;
 
   if (member) {
     redirect("/");
@@ -56,6 +58,12 @@ export default async function AuthPage({ searchParams }: PageProps) {
             <p className={styles.meta}>ニックネームが重複している場合は登録できません。</p>
           </article>
         </section>
+
+        <div className={styles.backToSelectWrap}>
+          <a className={styles.backToSelectLink} href={clubSelectorUrl}>
+            部活選択に戻る
+          </a>
+        </div>
       </div>
     </main>
   );

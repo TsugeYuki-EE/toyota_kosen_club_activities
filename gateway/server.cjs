@@ -1,6 +1,7 @@
 const { spawn, spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const net = require("node:net");
+const path = require("node:path");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const { createProxyMiddleware } = require("http-proxy-middleware");
@@ -10,6 +11,9 @@ const HAND = "handball";
 const TT = "table-tennis";
 const LISTEN_PORT = Number(process.env.PORT || 3000);
 const FORCE_HTTPS = String(process.env.FORCE_HTTPS || "false").toLowerCase() === "true";
+const RUN_DB_MIGRATIONS = String(process.env.RUN_DB_MIGRATIONS || "true").toLowerCase() !== "false";
+const HANDBALL_EXTERNAL_PORT = Number(process.env.HANDBALL_EXTERNAL_PORT || process.env.HANDBALL_PORT || 3001);
+const TABLE_TENNIS_EXTERNAL_PORT = Number(process.env.TABLE_TENNIS_EXTERNAL_PORT || process.env.TABLE_TENNIS_PORT || 3002);
 const HANDBALL_LOCAL_DB_URL = "postgresql://club:clubpass@postgres:5432/handball_notes?schema=public";
 const TABLE_TENNIS_LOCAL_DB_URL = "postgresql://club:clubpass@postgres:5432/table_tennis_notes?schema=public";
 
@@ -21,7 +25,9 @@ const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${LISTEN_
 const app = express();
 app.set("trust proxy", true);
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: false }));
+app.use("/assets/table-tennis", express.static(path.resolve(process.cwd(), "apps/table-tennis/public"), {
+	fallthrough: false,
+}));
 
 app.use((req, res, next) => {
 	if (!FORCE_HTTPS) {
@@ -52,6 +58,42 @@ function getSport(req) {
 		return value;
 	}
 	return null;
+}
+
+function getRequestProtocol(req) {
+	const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase();
+	if (forwardedProto === "https" || forwardedProto === "http") {
+		return forwardedProto;
+	}
+
+	if (req.secure) {
+		return "https";
+	}
+
+	return "http";
+}
+
+function getRequestHost(req) {
+	const hostHeader = String(req.headers.host || "localhost").trim();
+	if (!hostHeader) {
+		return "localhost";
+	}
+
+	if (hostHeader.startsWith("[")) {
+		const endBracket = hostHeader.indexOf("]");
+		if (endBracket !== -1) {
+			return hostHeader.slice(0, endBracket + 1);
+		}
+	}
+
+	return hostHeader.split(":")[0] || "localhost";
+}
+
+function buildExternalSportUrl(req, sport, path = "/") {
+	const protocol = getRequestProtocol(req);
+	const host = getRequestHost(req);
+	const port = sport === HAND ? HANDBALL_EXTERNAL_PORT : TABLE_TENNIS_EXTERNAL_PORT;
+	return `${protocol}://${host}:${port}${path}`;
 }
 
 function runOrFail(command, args, env, label) {
@@ -145,12 +187,13 @@ function launchStandaloneApp(label, appDir, port, env) {
 	childProcesses.push(child);
 }
 
-function buildAppEnv(baseEnv, dbUrl, adminKey) {
+function buildAppEnv(baseEnv, dbUrl, adminKey, nodeOptions, appBaseUrl) {
 	return {
 		...baseEnv,
 		DATABASE_URL: dbUrl,
 		ADMIN_VIEW_KEY: adminKey,
-		NEXT_PUBLIC_APP_BASE_URL: publicBaseUrl,
+		NEXT_PUBLIC_APP_BASE_URL: appBaseUrl,
+		NODE_OPTIONS: nodeOptions,
 		HOSTNAME: "0.0.0.0",
 	};
 }
@@ -162,27 +205,35 @@ async function startInternalApps() {
 		process.env,
 		HANDBALL_LOCAL_DB_URL,
 		process.env.HANDBALL_ADMIN_VIEW_KEY || "toyota-handball-admin",
+		process.env.HANDBALL_NODE_OPTIONS || "--max-old-space-size=384",
+		process.env.HANDBALL_PUBLIC_BASE_URL || `http://localhost:${HANDBALL_EXTERNAL_PORT}`,
 	);
 	const tableTennisEnv = buildAppEnv(
 		process.env,
 		TABLE_TENNIS_LOCAL_DB_URL,
 		process.env.TABLE_TENNIS_ADMIN_VIEW_KEY || "toyota-table-tennis-admin",
+		process.env.TABLE_TENNIS_NODE_OPTIONS || "--max-old-space-size=384",
+		process.env.TABLE_TENNIS_PUBLIC_BASE_URL || `http://localhost:${TABLE_TENNIS_EXTERNAL_PORT}`,
 	);
 
-	const handballMigrateOk = runWithStatus("npm", ["--prefix", "apps/handball", "run", "db:migrate:deploy"], handballEnv);
-	if (!handballMigrateOk) {
-		console.warn("handball migrate deploy failed; fallback to db:push");
-		runOrFail("npm", ["--prefix", "apps/handball", "run", "db:push"], handballEnv, "handball db push");
-	}
+	if (RUN_DB_MIGRATIONS) {
+		const handballMigrateOk = runWithStatus("npm", ["--prefix", "apps/handball", "run", "db:migrate:deploy"], handballEnv);
+		if (!handballMigrateOk) {
+			console.warn("handball migrate deploy failed; fallback to db:push");
+			runOrFail("npm", ["--prefix", "apps/handball", "run", "db:push"], handballEnv, "handball db push");
+		}
 
-	const tableTennisMigrateOk = runWithStatus(
-		"npm",
-		["--prefix", "apps/table-tennis", "run", "db:migrate:deploy"],
-		tableTennisEnv,
-	);
-	if (!tableTennisMigrateOk) {
-		console.warn("table-tennis migrate deploy failed; fallback to db:push");
-		runOrFail("npm", ["--prefix", "apps/table-tennis", "run", "db:push"], tableTennisEnv, "table-tennis db push");
+		const tableTennisMigrateOk = runWithStatus(
+			"npm",
+			["--prefix", "apps/table-tennis", "run", "db:migrate:deploy"],
+			tableTennisEnv,
+		);
+		if (!tableTennisMigrateOk) {
+			console.warn("table-tennis migrate deploy failed; fallback to db:push");
+			runOrFail("npm", ["--prefix", "apps/table-tennis", "run", "db:push"], tableTennisEnv, "table-tennis db push");
+		}
+	} else {
+		console.warn("RUN_DB_MIGRATIONS=false: skip prisma migrations");
 	}
 
 	launchStandaloneApp("handball", "apps/handball", Number(process.env.HANDBALL_PORT || 3001), handballEnv);
@@ -195,6 +246,11 @@ app.get("/health", (_req, res) => {
 
 app.get("/", (req, res) => {
 	const selected = getSport(req);
+	if (selected) {
+		res.redirect(303, buildExternalSportUrl(req, selected, "/"));
+		return;
+	}
+
 	const selectedLabel = selected === HAND ? "現在はハンドボールを選択中" : selected === TT ? "現在は卓球を選択中" : "まだ未選択です";
 
 	res.status(200).type("html").send(`<!doctype html>
@@ -213,8 +269,10 @@ app.get("/", (req, res) => {
 		.status { margin: 0 0 20px; font-weight: 600; color: #24508b; }
 		form { display: grid; gap: 12px; }
 		button { border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 700; cursor: pointer; }
-		.hand { background: linear-gradient(120deg, #170f11 0%, #2c0f17 56%, #3a121b 100%); color: #fff2f4; }
-		.tt { background: #ffffff; color: #2f4d61; border: 1px solid #cbd9e2; }
+		.sportButton { display: flex; align-items: center; justify-content: center; gap: 10px; }
+		.sportLogo { width: 28px; height: 28px; object-fit: contain; }
+		.hand { background: #ffffff; color: #2f4d61; border: 1px solid #cbd9e2; }
+		.tt { background: linear-gradient(120deg, #170f11 0%, #2c0f17 56%, #3a121b 100%); color: #fff2f4; }
 		.go { background: #1e40af; color: #fff; margin-top: 8px; width: 100%; }
 	</style>
 </head>
@@ -225,8 +283,8 @@ app.get("/", (req, res) => {
 			<p>最初に利用する部活を選択してください。選択後は同じURLで各アプリのログインページへ遷移します。</p>
 			<p class="status">${selectedLabel}</p>
 			<form action="/select" method="post">
-				<button class="hand" type="submit" name="sport" value="${HAND}">ハンドボール</button>
-				<button class="tt" type="submit" name="sport" value="${TT}">卓球</button>
+				<button class="hand sportButton" type="submit" name="sport" value="${HAND}">ハンドボール</button>
+				<button class="tt sportButton" type="submit" name="sport" value="${TT}"><img class="sportLogo" src="/assets/table-tennis/table-tennis-logo.svg" alt="" aria-hidden="true" />卓球</button>
 			</form>
 			${selected ? "<form action=\"/auth\" method=\"get\"><button class=\"go\" type=\"submit\">選択中のアプリへ進む</button></form>" : ""}
 		</section>
@@ -235,7 +293,7 @@ app.get("/", (req, res) => {
 </html>`);
 });
 
-app.post("/select", (req, res) => {
+app.post("/select", express.urlencoded({ extended: false }), (req, res) => {
 	const sport = String(req.body.sport || "");
 
 	if (sport !== HAND && sport !== TT) {
@@ -243,10 +301,13 @@ app.post("/select", (req, res) => {
 		return;
 	}
 
+	const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase();
+	const useSecureCookie = forwardedProto === "https" || req.secure;
+
 	res.cookie(SPORT_COOKIE, sport, {
 		httpOnly: true,
 		sameSite: "lax",
-		secure: process.env.NODE_ENV === "production",
+		secure: useSecureCookie,
 		path: "/",
 		maxAge: 60 * 60 * 24 * 30,
 	});
@@ -254,19 +315,27 @@ app.post("/select", (req, res) => {
 	res.redirect(303, "/auth");
 });
 
-app.get("/auth", (req, res) => {
+app.get("/auth", (req, res, next) => {
 	const selected = getSport(req);
 	if (!selected) {
 		res.redirect(303, "/");
 		return;
 	}
 
-	const target = selected === HAND ? handballTarget : tableTennisTarget;
-	res.redirect(303, `${target}/login`);
+	res.redirect(303, buildExternalSportUrl(req, selected, "/auth"));
+});
+
+app.get("/switch-club", (req, res) => {
+	res.clearCookie(SPORT_COOKIE, {
+		path: "/",
+	});
+
+	res.redirect(303, "/");
 });
 
 const proxy = createProxyMiddleware({
 	changeOrigin: true,
+	xfwd: true,
 	ws: true,
 	router: (req) => {
 		const sport = getSport(req);
@@ -275,7 +344,13 @@ const proxy = createProxyMiddleware({
 });
 
 app.use((req, res, next) => {
-	if (req.path === "/" || req.path === "/select" || req.path === "/health") {
+	if (
+		req.path === "/"
+		|| req.path === "/select"
+		|| req.path === "/health"
+		|| req.path === "/switch-club"
+		|| req.path.startsWith("/assets/")
+	) {
 		next();
 		return;
 	}

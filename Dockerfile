@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-bookworm-slim AS base
+FROM node:22-alpine AS base
 WORKDIR /workspace
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
@@ -8,10 +8,10 @@ ENV NPM_CONFIG_FETCH_RETRIES=5
 ENV NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000
 ENV NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000
 ENV NPM_CONFIG_FETCH_TIMEOUT=300000
+ENV NPM_CONFIG_AUDIT=false
+ENV NPM_CONFIG_FUND=false
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl \
-  && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssl libc6-compat
 
 FROM base AS deps
 COPY package.json package-lock.json ./
@@ -47,15 +47,15 @@ RUN npm --prefix apps/handball run build
 
 FROM base AS runtime-deps
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --no-audit --no-fund \
+RUN npm ci --omit=dev --omit=optional --ignore-scripts \
   && npm cache clean --force
 
 COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
-RUN npm --prefix apps/table-tennis ci --omit=dev --no-audit --no-fund \
+RUN npm --prefix apps/table-tennis ci --omit=dev --omit=optional \
   && npm cache clean --force
 
 COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
-RUN npm --prefix apps/handball ci --omit=dev --no-audit --no-fund \
+RUN npm --prefix apps/handball ci --omit=dev --omit=optional \
   && npm cache clean --force
 
 FROM base AS runner
@@ -72,14 +72,16 @@ COPY --from=builder /workspace/apps/handball/prisma.config.ts ./apps/handball/pr
 COPY --from=builder /workspace/apps/handball/prisma ./apps/handball/prisma
 COPY --from=builder /workspace/apps/handball/public ./apps/handball/public
 COPY --from=builder /workspace/apps/handball/.next/standalone ./apps/handball/.next/standalone
-COPY --from=builder /workspace/apps/handball/.next/static ./apps/handball/.next/static
+COPY --from=builder /workspace/apps/handball/.next/static ./apps/handball/.next/standalone/.next/static
+COPY --from=builder /workspace/apps/handball/public ./apps/handball/.next/standalone/public
 
 COPY --from=builder /workspace/apps/table-tennis/package.json ./apps/table-tennis/package.json
 COPY --from=builder /workspace/apps/table-tennis/prisma.config.ts ./apps/table-tennis/prisma.config.ts
 COPY --from=builder /workspace/apps/table-tennis/prisma ./apps/table-tennis/prisma
 COPY --from=builder /workspace/apps/table-tennis/public ./apps/table-tennis/public
 COPY --from=builder /workspace/apps/table-tennis/.next/standalone ./apps/table-tennis/.next/standalone
-COPY --from=builder /workspace/apps/table-tennis/.next/static ./apps/table-tennis/.next/static
+COPY --from=builder /workspace/apps/table-tennis/.next/static ./apps/table-tennis/.next/standalone/.next/static
+COPY --from=builder /workspace/apps/table-tennis/public ./apps/table-tennis/.next/standalone/public
 
 EXPOSE 3000
 

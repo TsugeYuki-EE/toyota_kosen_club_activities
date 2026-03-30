@@ -39,7 +39,13 @@
   - `backups/handball`
   - `backups/table-tennis`
 
-バックアップは `docker compose up -d` で `db-backup` も一緒に起動されます。
+  軽量運用のため、`db-backup` は `profile: backup` を指定した場合のみ起動されます。
+
+  バックアップ有効化の起動例:
+
+  ```bash
+  docker compose --profile backup up -d
+  ```
 
 ## 外部DBを使わない運用
 
@@ -77,11 +83,23 @@ cd toyota_kosen_club_activities
 docker compose up --build -d
 ```
 
+標準の `docker compose up` は省メモリ設定で起動されます。
+
+- PostgreSQL: `shared_buffers=64MB`, `max_connections=40`
+- アプリ (gateway): `NODE_OPTIONS=--max-old-space-size=256`
+- 子アプリ (handball / table-tennis): `--max-old-space-size=384`
+
 Raspberry Pi でビルド時にメモリ不足が起きる場合:
 
 ```bash
 docker compose build --build-arg BUILD_NODE_OPTIONS=--max-old-space-size=1024 app
 docker compose up -d
+```
+
+DB 初期化済みで起動時間を短縮したい場合（マイグレーションをスキップ）:
+
+```bash
+RUN_DB_MIGRATIONS=false docker compose up -d
 ```
 
 アクセス先:

@@ -1,17 +1,15 @@
 ﻿# syntax=docker/dockerfile:1
 
-FROM node:22-bookworm-slim AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends openssl \
-	&& rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssl libc6-compat
 
 FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm config set fetch-retries 5 \
 	&& npm config set fetch-retry-maxtimeout 120000 \
-	&& npm ci
+	&& npm ci --no-audit --no-fund --omit=optional
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
@@ -24,7 +22,8 @@ ENV NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 
 # Optimize build for constrained environments
 ENV NODE_ENV=production
-ENV NODE_OPTIONS=--max-old-space-size=3072
+ARG BUILD_NODE_OPTIONS=--max-old-space-size=1536
+ENV NODE_OPTIONS=${BUILD_NODE_OPTIONS}
 
 # Clean any previous build artifacts and caches
 RUN rm -rf .next node_modules/.cache
@@ -38,7 +37,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm config set fetch-retries 5 \
 	&& npm config set fetch-retry-maxtimeout 120000 \
-	&& npm ci --omit=dev \
+	&& npm ci --omit=dev --omit=optional --ignore-scripts --no-audit --no-fund \
 	&& npm cache clean --force
 
 COPY --from=builder /app/.next/standalone ./

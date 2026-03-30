@@ -3,6 +3,7 @@ services:
     image: postgres:16-alpine
     container_name: club-activities-postgres
     restart: unless-stopped
+    init: true
     environment:
       POSTGRES_USER: club
       POSTGRES_PASSWORD: clubpass
@@ -15,12 +16,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
-    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=80"]
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=40"]
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   init-db:
     image: postgres:16-alpine
     container_name: club-activities-init-db
     restart: "no"
+    init: true
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,6 +53,8 @@ services:
     image: postgres:16-alpine
     container_name: club-activities-db-backup
     restart: unless-stopped
+    init: true
+    profiles: ["backup"]
     depends_on:
       init-db:
         condition: service_completed_successfully
@@ -62,6 +70,10 @@ services:
       - ./backups/handball:/backups/handball
       - ./backups/table-tennis:/backups/table-tennis
     command: ["sh", "/scripts/hourly-db-backup.sh"]
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   app:
     build:
@@ -69,16 +81,29 @@ services:
       dockerfile: Dockerfile
     container_name: toyota-kosen-club-activities
     restart: unless-stopped
+    init: true
     depends_on:
       init-db:
         condition: service_completed_successfully
     ports:
       - "0.0.0.0:3000:3000"
+      - "0.0.0.0:3001:3001"
+      - "0.0.0.0:3002:3002"
     environment:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
       FORCE_HTTPS: ${FORCE_HTTPS:-false}
+      RUN_DB_MIGRATIONS: ${RUN_DB_MIGRATIONS:-true}
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=256}
+      HANDBALL_NODE_OPTIONS: ${HANDBALL_NODE_OPTIONS:---max-old-space-size=384}
+      TABLE_TENNIS_NODE_OPTIONS: ${TABLE_TENNIS_NODE_OPTIONS:---max-old-space-size=384}
+      HANDBALL_PUBLIC_BASE_URL: ${HANDBALL_PUBLIC_BASE_URL:-http://localhost:3001}
+      TABLE_TENNIS_PUBLIC_BASE_URL: ${TABLE_TENNIS_PUBLIC_BASE_URL:-http://localhost:3002}
       HANDBALL_ADMIN_VIEW_KEY: toyota-handball-admin
       TABLE_TENNIS_ADMIN_VIEW_KEY: toyota-table-tennis-admin
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:

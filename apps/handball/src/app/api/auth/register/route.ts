@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
 
-    await setMemberSession(createdMember.id);
+    await setMemberSession(createdMember.id, request);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       redirectUrl.searchParams.set("error", "そのニックネームは既に使われています");
