@@ -254,6 +254,22 @@ docker compose -f docker-compose.yml -f docker-compose.tunnel.yml logs -f cloudf
 
 - https://toyotakosenclubnotes.cc
 
+## 7. コード変更時の自動再デプロイ（オプション）
+
+コード更新のたびにコンテナを自動で再ビルド・再起動したい場合は、監視スクリプトを使います。
+
+```bash
+cd /opt/toyota_kosen_club_activities
+sudo apt install -y inotify-tools
+chmod +x ./bin/auto-redeploy.sh
+./bin/auto-redeploy.sh
+```
+
+補足:
+
+- 初回の `up -d --build` をスキップしたいときは `INITIAL_DEPLOY=0 ./bin/auto-redeploy.sh`
+- `.env.tunnel` の場所を変える場合は `ENV_FILE=/path/to/.env.tunnel ./bin/auto-redeploy.sh`
+
 Cloudflare 側の SSL/TLS 設定推奨:
 
 - SSL/TLS mode: `Full`（または `Full (strict)`）
