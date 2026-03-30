@@ -89,13 +89,6 @@ function getRequestHost(req) {
 	return hostHeader.split(":")[0] || "localhost";
 }
 
-function buildExternalSportUrl(req, sport, path = "/") {
-	const protocol = getRequestProtocol(req);
-	const host = getRequestHost(req);
-	const port = sport === HAND ? HANDBALL_EXTERNAL_PORT : TABLE_TENNIS_EXTERNAL_PORT;
-	return `${protocol}://${host}:${port}${path}`;
-}
-
 function runOrFail(command, args, env, label) {
 	const result = spawnSync(command, args, {
 		cwd: process.cwd(),
@@ -247,7 +240,7 @@ app.get("/health", (_req, res) => {
 app.get("/", (req, res) => {
 	const selected = getSport(req);
 	if (selected) {
-		res.redirect(303, buildExternalSportUrl(req, selected, "/"));
+		res.redirect(303, "/auth");
 		return;
 	}
 
@@ -313,16 +306,6 @@ app.post("/select", express.urlencoded({ extended: false }), (req, res) => {
 	});
 
 	res.redirect(303, "/auth");
-});
-
-app.get("/auth", (req, res, next) => {
-	const selected = getSport(req);
-	if (!selected) {
-		res.redirect(303, "/");
-		return;
-	}
-
-	res.redirect(303, buildExternalSportUrl(req, selected, "/auth"));
 });
 
 app.get("/switch-club", (req, res) => {

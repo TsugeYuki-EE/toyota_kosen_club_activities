@@ -292,9 +292,39 @@ docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tu
   - Zero Trust 側で Public Hostname が `app:3000` を向いているか確認
 - ドメインが開かない:
   - Cloudflare DNS で対象レコードが Proxy ON か確認
+- Cloudflare で `Error 502 (Host Error)`:
+  - コンテナ状態を確認:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml ps
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml logs --tail=200 app
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml logs --tail=200 cloudflared
+```
+
+  - Raspberry Pi 上でオリジン応答を確認:
+
+```bash
+curl -i http://127.0.0.1:3000/health
+```
+
+  - Cloudflare Zero Trust の Tunnel 設定で Public Hostname の Service が `http://app:3000` か確認
+  - `app` コンテナが再起動ループなら、まず `app` のログを優先して修正
+  - 反映後に再起動:
+
+```bash
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+```
 - app が再起動ループ:
   - `docker compose logs --tail=200 app` で Prisma エラー確認
   - `docker compose up -d --build app` で再ビルド
+- 部活動選択ボタン押下後に `ERR_CONNECTION_TIMED_OUT`:
+  - 原因: ゲートウェイが `:3001` / `:3002` へ外向きリダイレクトすると、Cloudflare Tunnel（443のみ公開）では到達できない
+  - 対処: ゲートウェイ経由の同一オリジンルーティングを使う（本リポジトリでは `gateway/server.cjs` 修正済み）
+  - 修正反映:
+
+```bash
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+```
 
 - `no space left on device` でビルド失敗:
   - まず容量確認:
