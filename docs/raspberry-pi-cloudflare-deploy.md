@@ -270,6 +270,24 @@ chmod +x ./bin/auto-redeploy.sh
 - 初回の `up -d --build` をスキップしたいときは `INITIAL_DEPLOY=0 ./bin/auto-redeploy.sh`
 - `.env.tunnel` の場所を変える場合は `ENV_FILE=/path/to/.env.tunnel ./bin/auto-redeploy.sh`
 
+再起動後も自動監視を継続したい場合（systemd）:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+chmod +x ./bin/install-auto-redeploy-service.sh ./bin/uninstall-auto-redeploy-service.sh
+sudo ./bin/install-auto-redeploy-service.sh
+
+# ログ確認
+sudo journalctl -u toyota-auto-redeploy -f
+```
+
+停止/削除:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+sudo ./bin/uninstall-auto-redeploy-service.sh
+```
+
 Cloudflare 側の SSL/TLS 設定推奨:
 
 - SSL/TLS mode: `Full`（または `Full (strict)`）
