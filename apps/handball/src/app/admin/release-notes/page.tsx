@@ -11,6 +11,43 @@ type PageProps = {
   }>;
 };
 
+async function getReleaseNotesSafely() {
+  try {
+    const notes = await prisma.releaseNote.findMany({
+      select: {
+        id: true,
+        version: true,
+        title: true,
+        content: true,
+        createdBy: {
+          select: {
+            nickname: true,
+          },
+        },
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return { notes, loadError: null as string | null };
+  } catch (error) {
+    console.error("[admin/release-notes] failed to fetch release notes", error);
+    return {
+      notes: [] as Array<{
+        id: string;
+        version: string;
+        title: string;
+        content: string;
+        createdBy: { nickname: string | null };
+        createdAt: Date;
+      }>,
+      loadError: "リリースノートの取得に失敗しました。DBのマイグレーション状態を確認してください。",
+    };
+  }
+}
+
 export default async function ReleaseNotesPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const adminMember = await getAuthorizedAdminMember();
@@ -39,23 +76,7 @@ export default async function ReleaseNotesPage({ searchParams }: PageProps) {
     );
   }
 
-  const releaseNotes = await prisma.releaseNote.findMany({
-    select: {
-      id: true,
-      version: true,
-      title: true,
-      content: true,
-      createdBy: {
-        select: {
-          nickname: true,
-        },
-      },
-      createdAt: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const { notes: releaseNotes, loadError } = await getReleaseNotesSafely();
 
   return (
     <main className={styles.page}>
@@ -70,6 +91,12 @@ export default async function ReleaseNotesPage({ searchParams }: PageProps) {
       {sp.error && (
         <section className={styles.card} style={{ borderColor: "#d32f2f" }}>
           <p style={{ color: "#d32f2f" }}>{sp.error}</p>
+        </section>
+      )}
+
+      {loadError && (
+        <section className={styles.card} style={{ borderColor: "#d32f2f" }}>
+          <p style={{ color: "#d32f2f" }}>{loadError}</p>
         </section>
       )}
 
