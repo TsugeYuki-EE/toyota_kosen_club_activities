@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./auth.module.css";
+import { ClubPasswordField } from "./club-password-field";
 
 export function LoginForm() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -95,7 +96,7 @@ export function LoginForm() {
         </label>
         <label>
           部活パスワード
-          <input name="clubPassword" type="password" placeholder="部活共通パスワード" required />
+          <ClubPasswordField />
         </label>
         <button type="submit">ログインする</button>
       </form>

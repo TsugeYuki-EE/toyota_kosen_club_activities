@@ -109,6 +109,22 @@
   font-weight: 700;
 }
 
+.passwordFieldRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.togglePasswordButton {
+  min-width: 72px;
+  background: #ffffff;
+  color: #173246;
+  border-color: #bccdd8;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .meta {
   color: #4e6a7d;
   font-size: 14px;

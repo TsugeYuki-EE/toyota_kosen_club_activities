@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionMember } from "@/lib/member-session";
 import { LoginForm } from "./login-form";
+import { ClubPasswordField } from "./club-password-field";
 import styles from "./auth.module.css";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function AuthPage({ searchParams }: PageProps) {
               <input type="hidden" name="redirectTo" value="/auth" />
               <label>
                 部活パスワード
-                <input name="clubPassword" type="password" placeholder="部活共通パスワード" required />
+                <ClubPasswordField />
               </label>
               <label>
                 学年
