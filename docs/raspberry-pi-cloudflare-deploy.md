@@ -12,11 +12,201 @@
 
 ## 1. Raspberry Pi の事前準備
 
+### 1-1. システム更新
+
 ```bash
 sudo apt update
-sudo apt install -y docker.io docker-compose-plugin
+sudo apt upgrade -y
+```
+
+### 1-2. 必須ツールのインストール
+
+```bash
+sudo apt install -y \
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  gnupg \
+  lsb-release \
+  git \
+  wget \
+  vim \
+  net-tools
+```
+
+### 1-3. Docker のインストール
+
+**Docker 公式リモジトリを追加:**
+
+```bash
+# Docker 公式 GPP キーを追加
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# リモジトリを追加（Raspberry Pi は bookworm または bullseye）
+echo \
+  "deb [arch=arm64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# リポジトリ更新
+sudo apt update
+```
+
+**Docker インストール:**
+
+```bash
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
+
+**Docker が起動しているか確認:**
+
+```bash
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo docker run hello-world
+```
+
+### 1-4. Docker をユーザーで実行可能に
+
+```bash
 sudo usermod -aG docker $USER
-# 反映のため一度ログアウト/ログイン
+newgrp docker
+```
+
+確認:
+```bash
+docker run hello-world
+```
+
+### 1-5. Docker Compose プラグイン（docker compose コマンド）
+
+前のステップで `docker-compose-plugin` をインストール済みなので、以下で確認:
+
+```bash
+docker compose version
+```
+
+### 1-6. Cloudflare Tunnel クライアント（cloudflared）のインストール
+
+**リポジトリを追加:**
+
+```bash
+# 以前の誤った定義がある場合は削除
+sudo rm -f /etc/apt/sources.list.d/cloudflare-main.list
+sudo rm -f /etc/apt/sources.list.d/cloudflared.list
+
+curl -L https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+
+# trixie の場合は cloudflared リポジトリが未提供のことがあるため bookworm を利用
+CF_DISTRO="$(lsb_release -cs)"
+if [ "$CF_DISTRO" = "trixie" ]; then
+  CF_DISTRO="bookworm"
+fi
+
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared ${CF_DISTRO} main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
+
+sudo apt update
+```
+
+**インストール:**
+
+```bash
+sudo apt install -y cloudflared
+```
+
+`apt update` で 404 が出る場合（ディストリ未対応時）は、公式バイナリを直接インストール:
+
+```bash
+ARCH="$(dpkg --print-architecture)"
+if [ "$ARCH" = "arm64" ]; then
+  PKG_ARCH="arm64"
+elif [ "$ARCH" = "armhf" ]; then
+  PKG_ARCH="arm"
+else
+  echo "Unsupported architecture: $ARCH"; exit 1
+fi
+
+wget -O cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${PKG_ARCH}.deb"
+sudo dpkg -i cloudflared.deb || sudo apt -f install -y
+rm -f cloudflared.deb
+```
+
+**動作確認:**
+
+```bash
+cloudflared --version
+```
+
+### 1-7. Docker ディスク容量最適化（オプション）
+
+Raspberry Pi は容量が限られているため、ストレージ効率を上げる:
+
+```bash
+sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+{
+  "storage-driver": "overlay2",
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  },
+  "live-restore": true
+}
+EOF
+
+sudo systemctl restart docker
+```
+
+### 1-8. スワップ設定（オプション、ラズパイ 4GB 以下の場合）
+
+```bash
+# dphys-swapfile が無い場合は先にインストール
+sudo apt update
+sudo apt install -y dphys-swapfile
+
+# 2GB に設定
+sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile
+
+sudo dphys-swapfile swapoff
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+
+# 状態確認
+swapon --show
+free -h
+```
+
+もし `dphys-swapfile` パッケージが使えない環境なら、汎用 swapfile を作成:
+
+```bash
+sudo swapoff -a
+sudo fallocate -l 2G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+
+grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+swapon --show
+free -h
+```
+
+### 1-9. OS 自動更新の有効化（セキュリティ推奨）
+
+```bash
+sudo apt install -y unattended-upgrades apt-listchanges
+
+sudo tee /etc/apt/apt.conf.d/50unattended-upgrades > /dev/null <<'EOF'
+Unattended-Upgrade::Allowed-Origins {
+  "\${distro_id}:\${distro_codename}-security";
+  "\${distro_id}ESMApps:\${distro_codename}-apps-security";
+  "\${distro_id}ESM:\${distro_codename}-infra-security";
+};
+Unattended-Upgrade::Mail "root";
+Unattended-Upgrade::MailReport "on-change";
+EOF
+
+sudo systemctl enable unattended-upgrades
+sudo systemctl restart unattended-upgrades
 ```
 
 ## 2. プロジェクト配置
