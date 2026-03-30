@@ -9,6 +9,8 @@ const { createProxyMiddleware } = require("http-proxy-middleware");
 const SPORT_COOKIE = "club_sport";
 const HAND = "handball";
 const TT = "table-tennis";
+const HAND_SESSION_COOKIE = "hbn_member_session";
+const TT_SESSION_COOKIE = "ttn_member_session";
 const LISTEN_PORT = Number(process.env.PORT || 3000);
 const FORCE_HTTPS = String(process.env.FORCE_HTTPS || "false").toLowerCase() === "true";
 const RUN_DB_MIGRATIONS = String(process.env.RUN_DB_MIGRATIONS || "true").toLowerCase() !== "false";
@@ -60,10 +62,28 @@ function getSport(req) {
 	return null;
 }
 
+function hasSelectedSportSession(req, sport) {
+	if (sport === HAND) {
+		return Boolean(req.cookies?.[HAND_SESSION_COOKIE]);
+	}
+	if (sport === TT) {
+		return Boolean(req.cookies?.[TT_SESSION_COOKIE]);
+	}
+	return false;
+}
+
 const proxy = createProxyMiddleware({
 	changeOrigin: true,
 	xfwd: true,
 	ws: true,
+	proxyTimeout: 15000,
+	timeout: 15000,
+	onError: (err, req, res) => {
+		console.error("proxy error:", err?.message || err);
+		if (!res.headersSent) {
+			res.status(503).type("text/plain").send("Upstream app is starting. Please retry in a few seconds.");
+		}
+	},
 	router: (req) => {
 		const sport = getSport(req);
 		return sport === HAND ? handballTarget : tableTennisTarget;
@@ -250,10 +270,15 @@ app.get("/health", (_req, res) => {
 app.get("/", (req, res) => {
 	const selected = getSport(req);
 	if (selected) {
-		// ログイン後に "/" へ戻るフローで /auth と相互リダイレクトしないよう、
-		// 選択済みならそのまま各アプリのルートへプロキシする。
-		req.url = "/";
-		proxy(req, res, () => {});
+		if (hasSelectedSportSession(req, selected)) {
+			// ログイン済みなら選択中アプリのトップへプロキシ
+			req.url = "/";
+			proxy(req, res, () => {});
+			return;
+		}
+
+		// 未ログイン時はログインページへ誘導
+		res.redirect(303, "/auth");
 		return;
 	}
 
