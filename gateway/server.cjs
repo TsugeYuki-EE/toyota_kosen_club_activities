@@ -242,7 +242,17 @@ app.post("/select", (req, res) => {
 		res.redirect(303, "/");
 		return;
 	}
-
+	@@ app.get("/auth", (req, res) => {
+		const selected = getSport(req);
+		if (!selected) {
+			res.redirect(303, "/");
+			return;
+		}
+	
+		const target = selected === HAND ? handballTarget : tableTennisTarget;
+		res.redirect(303, `${target}/login`);
+	});
+	@@ 
 	res.cookie(SPORT_COOKIE, sport, {
 		httpOnly: true,
 		sameSite: "lax",
