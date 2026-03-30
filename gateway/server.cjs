@@ -16,8 +16,10 @@ const FORCE_HTTPS = String(process.env.FORCE_HTTPS || "false").toLowerCase() ===
 const RUN_DB_MIGRATIONS = String(process.env.RUN_DB_MIGRATIONS || "true").toLowerCase() !== "false";
 const HANDBALL_EXTERNAL_PORT = Number(process.env.HANDBALL_EXTERNAL_PORT || process.env.HANDBALL_PORT || 3001);
 const TABLE_TENNIS_EXTERNAL_PORT = Number(process.env.TABLE_TENNIS_EXTERNAL_PORT || process.env.TABLE_TENNIS_PORT || 3002);
-const HANDBALL_LOCAL_DB_URL = "postgresql://club:clubpass@postgres:5432/handball_notes?schema=public";
-const TABLE_TENNIS_LOCAL_DB_URL = "postgresql://club:clubpass@postgres:5432/table_tennis_notes?schema=public";
+const POSTGRES_USER = process.env.POSTGRES_USER || "club";
+const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || "";
+const HANDBALL_LOCAL_DB_URL = `postgresql://${encodeURIComponent(POSTGRES_USER)}:${encodeURIComponent(POSTGRES_PASSWORD)}@postgres:5432/handball_notes?schema=public`;
+const TABLE_TENNIS_LOCAL_DB_URL = `postgresql://${encodeURIComponent(POSTGRES_USER)}:${encodeURIComponent(POSTGRES_PASSWORD)}@postgres:5432/table_tennis_notes?schema=public`;
 
 const handballTarget = `http://127.0.0.1:${process.env.HANDBALL_PORT || 3001}`;
 const tableTennisTarget = `http://127.0.0.1:${process.env.TABLE_TENNIS_PORT || 3002}`;
@@ -32,6 +34,14 @@ app.use("/assets/table-tennis", express.static(path.resolve(process.cwd(), "apps
 }));
 
 app.use((req, res, next) => {
+	res.setHeader("X-Content-Type-Options", "nosniff");
+	res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+	res.setHeader("X-Frame-Options", "DENY");
+	res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+	if (getRequestProtocol(req) === "https") {
+		res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+	}
+
 	if (!FORCE_HTTPS) {
 		next();
 		return;
@@ -53,6 +63,27 @@ app.use((req, res, next) => {
 });
 
 const childProcesses = [];
+
+function ensureRequiredEnv(name) {
+	const value = process.env[name];
+	if (!value || !String(value).trim()) {
+		throw new Error(`${name} is required`);
+	}
+	return value;
+}
+
+function validateStartupSecrets() {
+	if (!POSTGRES_PASSWORD.trim()) {
+		throw new Error("POSTGRES_PASSWORD is required");
+	}
+
+	ensureRequiredEnv("HANDBALL_ADMIN_VIEW_KEY");
+	ensureRequiredEnv("TABLE_TENNIS_ADMIN_VIEW_KEY");
+	ensureRequiredEnv("HANDBALL_CLUB_PASSWORD");
+	ensureRequiredEnv("TABLE_TENNIS_CLUB_PASSWORD");
+	ensureRequiredEnv("HANDBALL_SUPER_ADMIN_LOGIN_PASSWORD");
+	ensureRequiredEnv("TABLE_TENNIS_SUPER_ADMIN_LOGIN_PASSWORD");
+}
 
 function sendProxyUnavailable(res) {
 	if (res.headersSent) {
@@ -237,11 +268,14 @@ function launchStandaloneApp(label, appDir, port, env) {
 	childProcesses.push(child);
 }
 
-function buildAppEnv(baseEnv, dbUrl, adminKey, nodeOptions, appBaseUrl) {
+function buildAppEnv(baseEnv, dbUrl, adminKey, nodeOptions, appBaseUrl, clubPassword, superAdminNickname, superAdminLoginPassword) {
 	return {
 		...baseEnv,
 		DATABASE_URL: dbUrl,
 		ADMIN_VIEW_KEY: adminKey,
+		CLUB_PASSWORD: clubPassword,
+		SUPER_ADMIN_NICKNAME: superAdminNickname,
+		SUPER_ADMIN_LOGIN_PASSWORD: superAdminLoginPassword,
 		NEXT_PUBLIC_APP_BASE_URL: appBaseUrl,
 		NODE_OPTIONS: nodeOptions,
 		HOSTNAME: "0.0.0.0",
@@ -254,16 +288,22 @@ async function startInternalApps() {
 	const handballEnv = buildAppEnv(
 		process.env,
 		HANDBALL_LOCAL_DB_URL,
-		process.env.HANDBALL_ADMIN_VIEW_KEY || "toyota-handball-admin",
+		ensureRequiredEnv("HANDBALL_ADMIN_VIEW_KEY"),
 		process.env.HANDBALL_NODE_OPTIONS || "--max-old-space-size=384",
 		process.env.HANDBALL_PUBLIC_BASE_URL || `http://localhost:${HANDBALL_EXTERNAL_PORT}`,
+		ensureRequiredEnv("HANDBALL_CLUB_PASSWORD"),
+		process.env.HANDBALL_SUPER_ADMIN_NICKNAME || "admin",
+		ensureRequiredEnv("HANDBALL_SUPER_ADMIN_LOGIN_PASSWORD"),
 	);
 	const tableTennisEnv = buildAppEnv(
 		process.env,
 		TABLE_TENNIS_LOCAL_DB_URL,
-		process.env.TABLE_TENNIS_ADMIN_VIEW_KEY || "toyota-table-tennis-admin",
+		ensureRequiredEnv("TABLE_TENNIS_ADMIN_VIEW_KEY"),
 		process.env.TABLE_TENNIS_NODE_OPTIONS || "--max-old-space-size=384",
 		process.env.TABLE_TENNIS_PUBLIC_BASE_URL || `http://localhost:${TABLE_TENNIS_EXTERNAL_PORT}`,
+		ensureRequiredEnv("TABLE_TENNIS_CLUB_PASSWORD"),
+		process.env.TABLE_TENNIS_SUPER_ADMIN_NICKNAME || "admin",
+		ensureRequiredEnv("TABLE_TENNIS_SUPER_ADMIN_LOGIN_PASSWORD"),
 	);
 
 	if (RUN_DB_MIGRATIONS) {
@@ -421,6 +461,7 @@ process.on("SIGTERM", shutdown);
 
 (async () => {
 	try {
+		validateStartupSecrets();
 		await startInternalApps();
 
 		app.listen(LISTEN_PORT, "0.0.0.0", () => {

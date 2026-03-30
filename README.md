@@ -14,9 +14,11 @@
 - 初回アクセスで部活を選択（ハンドボール or 卓球）
 - 選択後はそれぞれの既存ログイン画面へ遷移
 - ログイン/ユーザ登録時に部活パスワードを追加
-  - ハンドボール: `hand`
-  - 卓球: `ttc`
-- `admin` の追加確認パスワードは既存どおり `devdev`
+  - `HANDBALL_CLUB_PASSWORD`
+  - `TABLE_TENNIS_CLUB_PASSWORD`
+- `admin` の追加確認パスワードは環境変数で設定
+  - `HANDBALL_SUPER_ADMIN_LOGIN_PASSWORD`
+  - `TABLE_TENNIS_SUPER_ADMIN_LOGIN_PASSWORD`
 - データベースは部活ごとに分離
   - `handball_notes`
   - `table_tennis_notes`
@@ -104,7 +106,7 @@ RUN_DB_MIGRATIONS=false docker compose up -d
 
 アクセス先:
 
-- http://localhost:3000
+- <http://localhost:3000>
 
 停止:
 
@@ -125,6 +127,26 @@ docker compose logs -f app
 - `PUBLIC_BASE_URL`
 - `HANDBALL_ADMIN_VIEW_KEY`
 - `TABLE_TENNIS_ADMIN_VIEW_KEY`
+- `POSTGRES_PASSWORD`
+- `HANDBALL_CLUB_PASSWORD`
+- `TABLE_TENNIS_CLUB_PASSWORD`
+- `HANDBALL_SUPER_ADMIN_LOGIN_PASSWORD`
+- `TABLE_TENNIS_SUPER_ADMIN_LOGIN_PASSWORD`
+
+`.env.example` を `.env` にコピーして値を設定してください。
+
+## Cloudflare で有効化を推奨する設定
+
+- SSL/TLS 暗号化モード: `Full (strict)`
+- 常時 HTTPS: ON
+- HSTS: ON（`max-age=31536000`, `includeSubDomains`, `preload`）
+- WAF Managed Rules: ON
+- Bot Fight Mode（または Super Bot Fight Mode）: ON
+- Security Level: `Medium` 以上
+- Browser Integrity Check: ON
+- Rate Limiting: `/auth`, `/api/auth/login`, `/api/auth/register` を重点的に制限
+- Zero Trust Access（管理画面保護）: `/admin*` 配下へメール認証などを要求
+- キャッシュ除外: `/auth*`, `/admin*`, `/api/*` を Cache Rule で Bypass
 
 ## Cloudflare 公開の最短手順
 
@@ -141,19 +163,19 @@ CLOUDFLARE_TUNNEL_TOKEN=あなたのトークン
 PUBLIC_BASE_URL=https://toyotakosenclubnotes.cc
 ```
 
-2. ローカルサービスを起動
+1. ローカルサービスを起動
 
 ```bash
 docker compose up -d --build
 ```
 
-3. Tunnel を起動
+1. Tunnel を起動
 
 ```bash
 docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d
 ```
 
-4. 確認
+1. 確認
 
 ```bash
 docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml ps

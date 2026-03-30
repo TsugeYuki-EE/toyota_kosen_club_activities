@@ -1,5 +1,18 @@
-const CLUB_PASSWORD = "ttc";
+const DEFAULT_CLUB_PASSWORD = "ttc";
+
+function getClubPassword(): string {
+  const envPassword = process.env.CLUB_PASSWORD?.trim();
+  if (envPassword) {
+    return envPassword;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("CLUB_PASSWORD is required in production");
+  }
+
+  return DEFAULT_CLUB_PASSWORD;
+}
 
 export function isValidClubPassword(password: string | null | undefined): boolean {
-  return (password || "") === CLUB_PASSWORD;
+  return (password || "") === getClubPassword();
 }

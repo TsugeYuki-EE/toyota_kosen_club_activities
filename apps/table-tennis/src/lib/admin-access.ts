@@ -1,15 +1,42 @@
 import { getSessionMember } from "@/lib/member-session";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
+import { timingSafeEqual } from "node:crypto";
 
-const SUPER_ADMIN_NICKNAME = "admin";
-const SUPER_ADMIN_LOGIN_PASSWORD = "devdev";
+const DEFAULT_SUPER_ADMIN_NICKNAME = "admin";
+const DEFAULT_SUPER_ADMIN_LOGIN_PASSWORD = "devdev";
+
+function getSuperAdminNickname(): string {
+  return process.env.SUPER_ADMIN_NICKNAME?.trim() || DEFAULT_SUPER_ADMIN_NICKNAME;
+}
+
+function getSuperAdminLoginPassword(): string {
+  const envPassword = process.env.SUPER_ADMIN_LOGIN_PASSWORD?.trim();
+  if (envPassword) {
+    return envPassword;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SUPER_ADMIN_LOGIN_PASSWORD is required in production");
+  }
+
+  return DEFAULT_SUPER_ADMIN_LOGIN_PASSWORD;
+}
+
+function safeEqual(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left, "utf8");
+  const rightBuffer = Buffer.from(right, "utf8");
+  if (leftBuffer.length !== rightBuffer.length) {
+    return false;
+  }
+  return timingSafeEqual(leftBuffer, rightBuffer);
+}
 
 export function isSuperAdminNickname(nickname: string | null | undefined): boolean {
-  return (nickname || "").toLowerCase() === SUPER_ADMIN_NICKNAME;
+  return (nickname || "").toLowerCase() === getSuperAdminNickname().toLowerCase();
 }
 
 export function isValidSuperAdminLoginPassword(password: string | null | undefined): boolean {
-  return (password || "") === SUPER_ADMIN_LOGIN_PASSWORD;
+  return safeEqual(password || "", getSuperAdminLoginPassword());
 }
 
 function isPrivilegedRole(role: string | null | undefined): boolean {

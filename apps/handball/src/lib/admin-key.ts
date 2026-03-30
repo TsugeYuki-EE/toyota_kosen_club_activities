@@ -3,7 +3,16 @@
 const defaultAdminKey = "toyota-handball-admin";
 
 export function getAdminKey(): string {
-  return process.env.ADMIN_VIEW_KEY || defaultAdminKey;
+  const key = process.env.ADMIN_VIEW_KEY?.trim();
+  if (key) {
+    return key;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("ADMIN_VIEW_KEY is required in production");
+  }
+
+  return defaultAdminKey;
 }
 
 // URL やヘッダーから受け取ったキーが有効かを判定します。
