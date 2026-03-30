@@ -126,9 +126,12 @@ class CpuSampler:
 
 class NetSampler:
     def __init__(self) -> None:
+        self.interface: Optional[str] = None
         self.prev_rx: Optional[int] = None
         self.prev_tx: Optional[int] = None
         self.prev_ts: Optional[float] = None
+        self.start_rx: Optional[int] = None
+        self.start_tx: Optional[int] = None
 
     @staticmethod
     def _read_iface_bytes(interface: str) -> Tuple[int, int]:
@@ -145,10 +148,28 @@ class NetSampler:
 
     def sample(self, interface: Optional[str]) -> NetworkSnapshot:
         if not interface:
+            self.interface = None
+            self.prev_rx = None
+            self.prev_tx = None
+            self.prev_ts = None
+            self.start_rx = None
+            self.start_tx = None
             return NetworkSnapshot(None, 0.0, 0.0, 0.0, 0.0)
+
+        if self.interface != interface:
+            self.interface = interface
+            self.prev_rx = None
+            self.prev_tx = None
+            self.prev_ts = None
+            self.start_rx = None
+            self.start_tx = None
 
         rx_bytes, tx_bytes = self._read_iface_bytes(interface)
         now = time.time()
+
+        if self.start_rx is None or self.start_tx is None:
+            self.start_rx = rx_bytes
+            self.start_tx = tx_bytes
 
         if self.prev_rx is None or self.prev_tx is None or self.prev_ts is None:
             self.prev_rx = rx_bytes
@@ -171,6 +192,13 @@ class NetSampler:
             rx_total_gb=rx_bytes / (1024**3),
             tx_total_gb=tx_bytes / (1024**3),
         )
+
+    def session_totals_gb(self) -> Tuple[float, float]:
+        if self.prev_rx is None or self.prev_tx is None or self.start_rx is None or self.start_tx is None:
+            return 0.0, 0.0
+        rx_gb = max(0.0, (self.prev_rx - self.start_rx) / (1024**3))
+        tx_gb = max(0.0, (self.prev_tx - self.start_tx) / (1024**3))
+        return rx_gb, tx_gb
 
 
 def read_cpu_temp_c() -> Optional[float]:
@@ -452,8 +480,9 @@ def render(
 
     system = get_system_snapshot(cpu_sampler)
     wifi = get_wifi_snapshot()
-    primary_iface = wifi.interface or detect_default_interface()
-    net = net_sampler.sample(primary_iface)
+    wifi_iface = wifi.interface if wifi.connected else None
+    net = net_sampler.sample(wifi_iface)
+    session_rx_gb, session_tx_gb = net_sampler.session_totals_gb()
     access = get_access_snapshot()
     docker_ok, containers, docker_err = get_container_snapshot()
 
@@ -502,6 +531,16 @@ def render(
             (
                 f"Interface: {wifi.interface}  SSID: {wifi.ssid or 'N/A'}  "
                 f"Signal: {signal_part}  Tx: {bitrate_part}"
+            ),
+            width,
+        )
+        draw_line(
+            stdscr,
+            10,
+            (
+                f"Wi-Fi data now RX/TX: {net.rx_mbps:6.2f}/{net.tx_mbps:6.2f} Mbps   "
+                f"Total RX/TX: {net.rx_total_gb:.2f}/{net.tx_total_gb:.2f} GB   "
+                f"Session RX/TX: {session_rx_gb:.2f}/{session_tx_gb:.2f} GB"
             ),
             width,
         )
