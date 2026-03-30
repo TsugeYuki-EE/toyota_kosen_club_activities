@@ -420,6 +420,98 @@ docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tu
 
 3日分（最大72世代）を保持します。
 
+### バックアップが動いているか確認
+
+`db-backup` は `docker-compose.yml` で `profiles: ["backup"]` になっているため、通常の `up -d` では起動しません。
+
+確認コマンド:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml ps db-backup
+```
+
+`db-backup` が `Up` でなければ、次で起動:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+docker compose --profile backup --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d db-backup
+docker compose --profile backup --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml logs -f db-backup
+```
+
+### 復旧手順（共通）
+
+復旧前の推奨:
+
+1. 書き込みを止めるため `app` を停止
+2. 対象 DB への接続を切ってから復元
+3. 復元後に `app` を再起動
+
+```bash
+cd /opt/toyota_kosen_club_activities
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml stop app
+```
+
+### 復旧手順（ハンドボール）
+
+1. 利用するバックアップを選ぶ:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+ls -1t backups/handball/handball-*.dump | head -n 10
+```
+
+2. 復元実行（最後の `pg_restore` のファイルパスを、選んだファイルに変更）:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+
+docker compose --profile backup --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml run --rm db-backup sh -lc '
+set -e
+PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$$handball_notes$$ AND pid <> pg_backend_pid();"
+PGPASSWORD="$POSTGRES_PASSWORD" dropdb --if-exists -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" handball_notes
+PGPASSWORD="$POSTGRES_PASSWORD" createdb -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" handball_notes
+PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --no-owner --no-privileges -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" -d handball_notes "/backups/handball/handball-20260330-080000.dump"
+'
+```
+
+3. 復元後にアプリ起動:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d app
+```
+
+### 復旧手順（卓球）
+
+1. 利用するバックアップを選ぶ:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+ls -1t backups/table-tennis/table-tennis-*.dump | head -n 10
+```
+
+2. 復元実行（最後の `pg_restore` のファイルパスを、選んだファイルに変更）:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+
+docker compose --profile backup --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml run --rm db-backup sh -lc '
+set -e
+PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$$table_tennis_notes$$ AND pid <> pg_backend_pid();"
+PGPASSWORD="$POSTGRES_PASSWORD" dropdb --if-exists -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" table_tennis_notes
+PGPASSWORD="$POSTGRES_PASSWORD" createdb -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" table_tennis_notes
+PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --no-owner --no-privileges -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER" -d table_tennis_notes "/backups/table-tennis/table-tennis-20260330-080000.dump"
+'
+```
+
+3. 復元後にアプリ起動:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d app
+```
+
 ## トラブルシュート
 
 - cloudflared が接続できない:
