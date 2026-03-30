@@ -40,10 +40,41 @@ RUN npm --prefix apps/handball run db:generate
 RUN npm --prefix apps/table-tennis run build
 RUN npm --prefix apps/handball run build
 
+FROM base AS runtime-deps
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev \
+  && npm cache clean --force
+
+COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
+RUN npm --prefix apps/table-tennis ci --omit=dev \
+  && npm cache clean --force
+
+COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
+RUN npm --prefix apps/handball ci --omit=dev \
+  && npm cache clean --force
+
 FROM base AS runner
 ENV NODE_ENV=production
 
-COPY --from=builder /workspace /workspace
+COPY --from=runtime-deps /workspace/node_modules ./node_modules
+COPY --from=runtime-deps /workspace/apps/table-tennis/node_modules ./apps/table-tennis/node_modules
+COPY --from=runtime-deps /workspace/apps/handball/node_modules ./apps/handball/node_modules
+
+COPY --from=builder /workspace/gateway ./gateway
+
+COPY --from=builder /workspace/apps/handball/package.json ./apps/handball/package.json
+COPY --from=builder /workspace/apps/handball/prisma.config.ts ./apps/handball/prisma.config.ts
+COPY --from=builder /workspace/apps/handball/prisma ./apps/handball/prisma
+COPY --from=builder /workspace/apps/handball/public ./apps/handball/public
+COPY --from=builder /workspace/apps/handball/.next/standalone ./apps/handball/.next/standalone
+COPY --from=builder /workspace/apps/handball/.next/static ./apps/handball/.next/static
+
+COPY --from=builder /workspace/apps/table-tennis/package.json ./apps/table-tennis/package.json
+COPY --from=builder /workspace/apps/table-tennis/prisma.config.ts ./apps/table-tennis/prisma.config.ts
+COPY --from=builder /workspace/apps/table-tennis/prisma ./apps/table-tennis/prisma
+COPY --from=builder /workspace/apps/table-tennis/public ./apps/table-tennis/public
+COPY --from=builder /workspace/apps/table-tennis/.next/standalone ./apps/table-tennis/.next/standalone
+COPY --from=builder /workspace/apps/table-tennis/.next/static ./apps/table-tennis/.next/static
 
 EXPOSE 3000
 
