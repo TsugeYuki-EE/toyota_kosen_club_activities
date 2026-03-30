@@ -213,8 +213,8 @@ app.get("/", (req, res) => {
 		.status { margin: 0 0 20px; font-weight: 600; color: #24508b; }
 		form { display: grid; gap: 12px; }
 		button { border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 700; cursor: pointer; }
-		.hand { background: #ef6c00; color: #fff; }
-		.tt { background: #00695c; color: #fff; }
+		.hand { background: linear-gradient(120deg, #170f11 0%, #2c0f17 56%, #3a121b 100%); color: #fff2f4; }
+		.tt { background: #ffffff; color: #2f4d61; border: 1px solid #cbd9e2; }
 		.go { background: #1e40af; color: #fff; margin-top: 8px; width: 100%; }
 	</style>
 </head>
@@ -242,17 +242,7 @@ app.post("/select", (req, res) => {
 		res.redirect(303, "/");
 		return;
 	}
-	@@ app.get("/auth", (req, res) => {
-		const selected = getSport(req);
-		if (!selected) {
-			res.redirect(303, "/");
-			return;
-		}
-	
-		const target = selected === HAND ? handballTarget : tableTennisTarget;
-		res.redirect(303, `${target}/login`);
-	});
-	@@ 
+
 	res.cookie(SPORT_COOKIE, sport, {
 		httpOnly: true,
 		sameSite: "lax",
@@ -262,6 +252,17 @@ app.post("/select", (req, res) => {
 	});
 
 	res.redirect(303, "/auth");
+});
+
+app.get("/auth", (req, res) => {
+	const selected = getSport(req);
+	if (!selected) {
+		res.redirect(303, "/");
+		return;
+	}
+
+	const target = selected === HAND ? handballTarget : tableTennisTarget;
+	res.redirect(303, `${target}/login`);
 });
 
 const proxy = createProxyMiddleware({
