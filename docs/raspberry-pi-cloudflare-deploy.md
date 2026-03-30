@@ -288,7 +288,108 @@ cd /opt/toyota_kosen_club_activities
 sudo ./bin/uninstall-auto-redeploy-service.sh
 ```
 
-Cloudflare 側の SSL/TLS 設定推奨:
+## 8. このアプリのデプロイ手段（運用別）
+
+このリポジトリでは、主に次の 3 パターンで運用できます。
+
+### 8-1. 手動デプロイ（最も安全・推奨）
+
+特徴:
+
+- 変更タイミングを自分で制御できる
+- 失敗時の切り戻しがしやすい
+- 学校行事前など、確実性を優先したいとき向け
+
+手順:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+git pull
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml ps
+```
+
+### 8-2. 自動デプロイ（変更検知ベース）
+
+特徴:
+
+- ファイル変更を検知すると自動で `up -d --build`
+- Raspberry Pi 上で直接編集・検証する運用に向く
+- 反映は速いが、保存ミスでも再ビルドされる
+
+利用方法:
+
+- ワンショット実行: `./bin/auto-redeploy.sh`
+- 常駐運用: `sudo ./bin/install-auto-redeploy-service.sh`
+
+ログ確認:
+
+```bash
+sudo journalctl -u toyota-auto-redeploy -f
+```
+
+### 8-3. GitHub Actions などの CI/CD 連携（チーム運用向け）
+
+特徴:
+
+- `main` へのマージをトリガーに自動デプロイ可能
+- 誰がいつデプロイしたか履歴が残る
+- ただし SSH 鍵管理、失敗時通知、ロールバック設計が必要
+
+最小構成の流れ:
+
+1. GitHub Actions で Raspberry Pi に SSH
+2. `git pull`
+3. `docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build`
+4. `docker compose ps` とヘルスチェック
+
+## 9. コード更新時にページへ反映する手段
+
+### 9-1. 何を更新したかで必要な操作が変わる
+
+- `apps/` や `gateway/` のコード変更: コンテナ再ビルドが必要
+- `docker-compose*.yml` や `Dockerfile` 変更: コンテナ再作成が必要
+- `.env.tunnel` 変更: `up -d` 再実行で反映
+
+手動反映コマンド:
+
+```bash
+cd /opt/toyota_kosen_club_activities
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+```
+
+### 9-2. ブラウザ側の更新手段
+
+サーバー更新後に表示が古い場合は次の順で確認:
+
+1. 通常リロード（F5）
+2. ハードリロード（Ctrl+Shift+R）
+3. シークレットウィンドウで表示確認
+4. Cloudflare キャッシュを Purge（必要時のみ）
+
+### 9-3. Cloudflare キャッシュの扱い
+
+- 動的ページ中心なら通常は自動で最新化される
+- 画像や静的アセット差し替え時はキャッシュ残りが起こることがある
+- 確実に反映したい場合:
+  - Cloudflare Dashboard → Caching → Purge Cache
+  - まずは「Purge by URL」、必要なら「Purge Everything」
+
+### 9-4. 反映確認チェックリスト
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml ps
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml logs --tail=100 app
+curl -i http://127.0.0.1:3000/health
+```
+
+ブラウザ確認:
+
+- https://toyotakosenclubnotes.cc
+- 部活動選択画面が表示される
+- 選択後、タイムアウトせず遷移できる
+
+## 10. Cloudflare 側の SSL/TLS 設定推奨
 
 - SSL/TLS mode: `Full`（または `Full (strict)`）
 - Edge Certificates: `Always Use HTTPS` を ON

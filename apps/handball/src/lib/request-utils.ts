@@ -8,9 +8,11 @@ function normalizeBaseUrl(value: string): string {
 
 // Render などのプロキシ配下でも外向きURLでリダイレクトできるようにします。
 export function getRequestOrigin(request: NextRequest): string {
-  const forwardedProto = request.headers.get("x-forwarded-proto");
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  if (forwardedProto && forwardedHost) {
+  const forwardedProtoRaw = request.headers.get("x-forwarded-proto");
+  const forwardedHostRaw = request.headers.get("x-forwarded-host");
+  const forwardedProto = forwardedProtoRaw?.split(",")[0]?.trim().toLowerCase();
+  const forwardedHost = forwardedHostRaw?.split(",")[0]?.trim();
+  if ((forwardedProto === "https" || forwardedProto === "http") && forwardedHost) {
     return `${forwardedProto}://${forwardedHost}`;
   }
 
