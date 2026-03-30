@@ -59,17 +59,10 @@ RUN sh -c 'set -e; \
 RUN npm --prefix apps/table-tennis run build
 RUN npm --prefix apps/handball run build
 
-FROM base AS runtime-deps
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --omit=optional --ignore-scripts \
-  && npm cache clean --force
-
-COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
-RUN npm --prefix apps/table-tennis ci --omit=dev --omit=optional \
-  && npm cache clean --force
-
-COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
-RUN npm --prefix apps/handball ci --omit=dev --omit=optional \
+FROM deps AS runtime-deps
+RUN npm prune --omit=dev --omit=optional --no-audit --no-fund \
+  && npm --prefix apps/table-tennis prune --omit=dev --omit=optional --no-audit --no-fund \
+  && npm --prefix apps/handball prune --omit=dev --omit=optional --no-audit --no-fund \
   && npm cache clean --force
 
 FROM base AS runner
