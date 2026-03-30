@@ -60,6 +60,16 @@ function getSport(req) {
 	return null;
 }
 
+const proxy = createProxyMiddleware({
+	changeOrigin: true,
+	xfwd: true,
+	ws: true,
+	router: (req) => {
+		const sport = getSport(req);
+		return sport === HAND ? handballTarget : tableTennisTarget;
+	},
+});
+
 function getRequestProtocol(req) {
 	const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase();
 	if (forwardedProto === "https" || forwardedProto === "http") {
@@ -240,7 +250,10 @@ app.get("/health", (_req, res) => {
 app.get("/", (req, res) => {
 	const selected = getSport(req);
 	if (selected) {
-		res.redirect(303, "/auth");
+		// ログイン後に "/" へ戻るフローで /auth と相互リダイレクトしないよう、
+		// 選択済みならそのまま各アプリのルートへプロキシする。
+		req.url = "/";
+		proxy(req, res, () => {});
 		return;
 	}
 
@@ -314,16 +327,6 @@ app.get("/switch-club", (req, res) => {
 	});
 
 	res.redirect(303, "/");
-});
-
-const proxy = createProxyMiddleware({
-	changeOrigin: true,
-	xfwd: true,
-	ws: true,
-	router: (req) => {
-		const sport = getSport(req);
-		return sport === HAND ? handballTarget : tableTennisTarget;
-	},
 });
 
 app.use((req, res, next) => {
