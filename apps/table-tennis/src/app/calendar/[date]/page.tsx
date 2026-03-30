@@ -181,7 +181,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
                 <input
                   type="hidden"
                   name="redirectTo"
-                  value={isHomeCalendarMode ? `/calendar/${date}?from=home` : `/calendar/${date}`}
+                  value="/"
                 />
                 <input type="hidden" name="eventId" value={event.id} />
                 <label>
