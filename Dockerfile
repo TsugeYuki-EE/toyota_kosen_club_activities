@@ -3,6 +3,11 @@
 FROM node:22-bookworm-slim AS base
 WORKDIR /workspace
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
+ENV NPM_CONFIG_FETCH_RETRIES=5
+ENV NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000
+ENV NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000
+ENV NPM_CONFIG_FETCH_TIMEOUT=300000
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl \
@@ -10,15 +15,15 @@ RUN apt-get update \
 
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci \
+RUN npm ci --no-audit --no-fund \
   && npm cache clean --force
 
 COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
-RUN npm --prefix apps/table-tennis ci \
+RUN npm --prefix apps/table-tennis ci --no-audit --no-fund \
   && npm cache clean --force
 
 COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
-RUN npm --prefix apps/handball ci \
+RUN npm --prefix apps/handball ci --no-audit --no-fund \
   && npm cache clean --force
 
 FROM base AS builder
@@ -42,15 +47,15 @@ RUN npm --prefix apps/handball run build
 
 FROM base AS runtime-deps
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev \
+RUN npm ci --omit=dev --no-audit --no-fund \
   && npm cache clean --force
 
 COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
-RUN npm --prefix apps/table-tennis ci --omit=dev \
+RUN npm --prefix apps/table-tennis ci --omit=dev --no-audit --no-fund \
   && npm cache clean --force
 
 COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
-RUN npm --prefix apps/handball ci --omit=dev \
+RUN npm --prefix apps/handball ci --omit=dev --no-audit --no-fund \
   && npm cache clean --force
 
 FROM base AS runner
