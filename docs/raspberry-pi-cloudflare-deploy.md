@@ -536,6 +536,9 @@ curl -i http://127.0.0.1:3000/health
 
   - Cloudflare Zero Trust の Tunnel 設定で Public Hostname の Service が `http://app:3000` か確認
   - `app` コンテナが再起動ループなら、まず `app` のログを優先して修正
+  - `cloudflared` ログに `failed to dial to edge with quic: timeout: no recent network activity` が出る場合:
+    - 原因: Wi-Fi/NAT 環境で UDP(QUIC) が不安定
+    - 対処: `docker-compose.tunnel.yml` で `cloudflared` を `--protocol http2` で起動（このリポジトリでは設定済み）
   - 反映後に再起動:
 
 ```bash

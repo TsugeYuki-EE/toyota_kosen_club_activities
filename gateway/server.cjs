@@ -54,6 +54,21 @@ app.use((req, res, next) => {
 
 const childProcesses = [];
 
+function sendProxyUnavailable(res) {
+	if (res.headersSent) {
+		return;
+	}
+
+	if (typeof res.status === "function") {
+		res.status(503).type("text/plain").send("Upstream app is starting. Please retry in a few seconds.");
+		return;
+	}
+
+	res.statusCode = 503;
+	res.setHeader("Content-Type", "text/plain; charset=utf-8");
+	res.end("Upstream app is starting. Please retry in a few seconds.");
+}
+
 function getSport(req) {
 	const value = req.cookies?.[SPORT_COOKIE];
 	if (value === HAND || value === TT) {
@@ -78,20 +93,22 @@ const proxy = createProxyMiddleware({
 	ws: true,
 	proxyTimeout: 15000,
 	timeout: 15000,
+	on: {
+		error: (err, req, res) => {
+			console.error("proxy error(on.error):", err?.message || err);
+			try {
+				sendProxyUnavailable(res);
+			} catch (responseError) {
+				console.error("failed to send proxy error response(on.error):", responseError);
+			}
+		},
+	},
 	onError: (err, req, res) => {
 		console.error("proxy error:", err?.message || err);
-		if (!res.headersSent) {
-			try {
-				if (typeof res.status === "function") {
-					res.status(503).type("text/plain").send("Upstream app is starting. Please retry in a few seconds.");
-					return;
-				}
-				res.statusCode = 503;
-				res.setHeader("Content-Type", "text/plain; charset=utf-8");
-				res.end("Upstream app is starting. Please retry in a few seconds.");
-			} catch (responseError) {
-				console.error("failed to send proxy error response:", responseError);
-			}
+		try {
+			sendProxyUnavailable(res);
+		} catch (responseError) {
+			console.error("failed to send proxy error response:", responseError);
 		}
 	},
 	router: (req) => {
@@ -277,13 +294,13 @@ app.get("/health", (_req, res) => {
 	res.status(200).json({ status: "ok" });
 });
 
-app.get("/", (req, res) => {
+app.get("/", (req, res, next) => {
 	const selected = getSport(req);
 	if (selected) {
 		if (hasSelectedSportSession(req, selected)) {
 			// ログイン済みなら選択中アプリへプロキシ。
 			// req.url を上書きすると /?month=YYYY-MM のクエリが消えるため保持する。
-			proxy(req, res, () => {});
+			proxy(req, res, next);
 			return;
 		}
 
@@ -383,6 +400,11 @@ app.use((req, res, next) => {
 	}
 
 	proxy(req, res, next);
+});
+
+app.use((err, _req, res, _next) => {
+	console.error("gateway middleware error:", err);
+	sendProxyUnavailable(res);
 });
 
 function shutdown() {
