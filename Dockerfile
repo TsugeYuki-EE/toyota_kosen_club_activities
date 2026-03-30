@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM node:22-alpine AS base
 WORKDIR /workspace
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -40,8 +38,7 @@ ENV NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres?schema=public
 ENV ADMIN_VIEW_KEY=placeholder
 
-RUN --mount=type=cache,target=/root/.cache/prisma \
-  sh -c 'set -e; \
+RUN sh -c 'set -e; \
   n=0; \
   until [ "$n" -ge 5 ]; do \
     npm --prefix apps/table-tennis run db:generate && break; \
@@ -50,8 +47,7 @@ RUN --mount=type=cache,target=/root/.cache/prisma \
     sleep $((n * 5)); \
   done; \
   [ "$n" -lt 5 ]'
-RUN --mount=type=cache,target=/root/.cache/prisma \
-  sh -c 'set -e; \
+RUN sh -c 'set -e; \
   n=0; \
   until [ "$n" -ge 5 ]; do \
     npm --prefix apps/handball run db:generate && break; \
