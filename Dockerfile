@@ -40,8 +40,26 @@ ENV NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres?schema=public
 ENV ADMIN_VIEW_KEY=placeholder
 
-RUN npm --prefix apps/table-tennis run db:generate
-RUN npm --prefix apps/handball run db:generate
+RUN --mount=type=cache,target=/root/.cache/prisma \
+  sh -c 'set -e; \
+  n=0; \
+  until [ "$n" -ge 5 ]; do \
+    npm --prefix apps/table-tennis run db:generate && break; \
+    n=$((n + 1)); \
+    echo "table-tennis prisma generate failed (attempt ${n}/5). retrying..."; \
+    sleep $((n * 5)); \
+  done; \
+  [ "$n" -lt 5 ]'
+RUN --mount=type=cache,target=/root/.cache/prisma \
+  sh -c 'set -e; \
+  n=0; \
+  until [ "$n" -ge 5 ]; do \
+    npm --prefix apps/handball run db:generate && break; \
+    n=$((n + 1)); \
+    echo "handball prisma generate failed (attempt ${n}/5). retrying..."; \
+    sleep $((n * 5)); \
+  done; \
+  [ "$n" -lt 5 ]'
 RUN npm --prefix apps/table-tennis run build
 RUN npm --prefix apps/handball run build
 
