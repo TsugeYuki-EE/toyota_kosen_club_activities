@@ -81,7 +81,17 @@ const proxy = createProxyMiddleware({
 	onError: (err, req, res) => {
 		console.error("proxy error:", err?.message || err);
 		if (!res.headersSent) {
-			res.status(503).type("text/plain").send("Upstream app is starting. Please retry in a few seconds.");
+			try {
+				if (typeof res.status === "function") {
+					res.status(503).type("text/plain").send("Upstream app is starting. Please retry in a few seconds.");
+					return;
+				}
+				res.statusCode = 503;
+				res.setHeader("Content-Type", "text/plain; charset=utf-8");
+				res.end("Upstream app is starting. Please retry in a few seconds.");
+			} catch (responseError) {
+				console.error("failed to send proxy error response:", responseError);
+			}
 		}
 	},
 	router: (req) => {
