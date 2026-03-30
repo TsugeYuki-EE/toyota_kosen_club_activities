@@ -467,6 +467,7 @@ def render(
     cpu_sampler: CpuSampler,
     net_sampler: NetSampler,
     cpu_hist: HistorySeries,
+    mem_hist: HistorySeries,
     temp_hist: HistorySeries,
     rx_hist: HistorySeries,
     tx_hist: HistorySeries,
@@ -487,6 +488,7 @@ def render(
     docker_ok, containers, docker_err = get_container_snapshot()
 
     cpu_hist.push(system.cpu_percent)
+    mem_hist.push(system.mem_percent)
     if system.temp_c is not None:
         temp_hist.push(system.temp_c)
     rx_hist.push(net.rx_mbps)
@@ -495,31 +497,36 @@ def render(
     draw_line(stdscr, 2, "[System]", width, curses.A_BOLD)
     temp_text = f"{system.temp_c:.1f} C" if system.temp_c is not None else "N/A"
     cpu_bar = make_bar(system.cpu_percent, 0.0, 100.0)
+    mem_bar = make_bar(system.mem_percent, 0.0, 100.0)
     temp_bar = make_bar(system.temp_c if system.temp_c is not None else 0.0, 20.0, 90.0)
     draw_line(
         stdscr,
         3,
         (
             f"CPU: {cpu_bar} {system.cpu_percent:5.1f}%   TEMP: {temp_bar} {temp_text:>7}   "
-            f"MEM: {system.mem_used_gb:.2f}/{system.mem_total_gb:.2f} GB ({system.mem_percent:4.1f}%)"
+            f"MEM: {mem_bar} {system.mem_percent:4.1f}%"
         ),
         width,
     )
     draw_line(
         stdscr,
         4,
-        f"LOAD: {system.load_1:.2f} {system.load_5:.2f} {system.load_15:.2f}   UPTIME: {system.uptime}",
+        (
+            f"MEM used/total: {system.mem_used_gb:.2f}/{system.mem_total_gb:.2f} GB   "
+            f"LOAD: {system.load_1:.2f} {system.load_5:.2f} {system.load_15:.2f}   UPTIME: {system.uptime}"
+        ),
         width,
     )
     graph_width = max(12, min(64, width - 16))
     draw_line(stdscr, 5, f"CPU hist : {make_sparkline(cpu_hist.list(), graph_width, 0.0, 100.0)}", width)
     draw_line(stdscr, 6, f"TEMP hist: {make_sparkline(temp_hist.list(), graph_width, 20.0, 90.0)}", width)
+    draw_line(stdscr, 7, f"MEM hist : {make_sparkline(mem_hist.list(), graph_width, 0.0, 100.0)}", width)
 
-    draw_line(stdscr, 8, "[Wi-Fi]", width, curses.A_BOLD)
+    draw_line(stdscr, 9, "[Wi-Fi]", width, curses.A_BOLD)
     if wifi.interface is None:
-        draw_line(stdscr, 9, "Wi-Fi interface not found (iw command or wlan interface missing)", width)
+        draw_line(stdscr, 10, "Wi-Fi interface not found (iw command or wlan interface missing)", width)
     elif not wifi.connected:
-        draw_line(stdscr, 9, f"Interface: {wifi.interface}  Status: disconnected", width)
+        draw_line(stdscr, 10, f"Interface: {wifi.interface}  Status: disconnected", width)
     else:
         signal_part = "N/A"
         if wifi.signal_dbm is not None and wifi.signal_percent is not None:
@@ -527,7 +534,7 @@ def render(
         bitrate_part = wifi.tx_bitrate or "N/A"
         draw_line(
             stdscr,
-            9,
+            10,
             (
                 f"Interface: {wifi.interface}  SSID: {wifi.ssid or 'N/A'}  "
                 f"Signal: {signal_part}  Tx: {bitrate_part}"
@@ -536,7 +543,7 @@ def render(
         )
         draw_line(
             stdscr,
-            10,
+            11,
             (
                 f"Wi-Fi data now RX/TX: {net.rx_mbps:6.2f}/{net.tx_mbps:6.2f} Mbps   "
                 f"Total RX/TX: {net.rx_total_gb:.2f}/{net.tx_total_gb:.2f} GB   "
@@ -545,10 +552,10 @@ def render(
             width,
         )
 
-    draw_line(stdscr, 11, "[Access / Internet]", width, curses.A_BOLD)
+    draw_line(stdscr, 12, "[Access / Internet]", width, curses.A_BOLD)
     draw_line(
         stdscr,
-        12,
+        13,
         (
             f"Active access: {access.active_connections}  "
             f"Unique client IPs(now): {access.unique_remote_ips}  "
@@ -558,7 +565,7 @@ def render(
     )
     draw_line(
         stdscr,
-        13,
+        14,
         (
             f"Interface: {net.interface or 'N/A'}  "
             f"RX: {net.rx_mbps:6.2f} Mbps  TX: {net.tx_mbps:6.2f} Mbps  "
@@ -567,23 +574,23 @@ def render(
         width,
     )
     net_max = max(1.0, max(rx_hist.list()[-graph_width:] + tx_hist.list()[-graph_width:] if rx_hist.list() and tx_hist.list() else [1.0]))
-    draw_line(stdscr, 14, f"RX hist  : {make_sparkline(rx_hist.list(), graph_width, 0.0, net_max)}", width)
-    draw_line(stdscr, 15, f"TX hist  : {make_sparkline(tx_hist.list(), graph_width, 0.0, net_max)}", width)
+    draw_line(stdscr, 15, f"RX hist  : {make_sparkline(rx_hist.list(), graph_width, 0.0, net_max)}", width)
+    draw_line(stdscr, 16, f"TX hist  : {make_sparkline(tx_hist.list(), graph_width, 0.0, net_max)}", width)
 
-    draw_line(stdscr, 17, "[Docker Containers]", width, curses.A_BOLD)
+    draw_line(stdscr, 18, "[Docker Containers]", width, curses.A_BOLD)
     if not docker_ok:
-        draw_line(stdscr, 18, f"Docker unavailable: {docker_err}", width)
+        draw_line(stdscr, 19, f"Docker unavailable: {docker_err}", width)
     else:
         running_count = sum(1 for c in containers if c.state == "running")
         draw_line(
             stdscr,
-            18,
+            19,
             f"Total: {len(containers)}  Running: {running_count}  Stopped: {len(containers) - running_count}",
             width,
         )
-        draw_line(stdscr, 19, "NAME                 STATE     STATUS                           PORTS", width, curses.A_UNDERLINE)
+        draw_line(stdscr, 20, "NAME                 STATE     STATUS                           PORTS", width, curses.A_UNDERLINE)
 
-        line = 20
+        line = 21
         for c in containers:
             if line >= height - 1:
                 break
@@ -614,13 +621,14 @@ def main(stdscr: curses.window) -> None:
     cpu_sampler = CpuSampler()
     net_sampler = NetSampler()
     cpu_hist = HistorySeries(80)
+    mem_hist = HistorySeries(80)
     temp_hist = HistorySeries(80)
     rx_hist = HistorySeries(80)
     tx_hist = HistorySeries(80)
     cpu_sampler.sample_percent()
 
     while True:
-        render(stdscr, cpu_sampler, net_sampler, cpu_hist, temp_hist, rx_hist, tx_hist)
+        render(stdscr, cpu_sampler, net_sampler, cpu_hist, mem_hist, temp_hist, rx_hist, tx_hist)
         key = stdscr.getch()
         if key in (ord("q"), ord("Q")):
             break
