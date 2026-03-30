@@ -281,8 +281,8 @@ app.get("/", (req, res) => {
 	const selected = getSport(req);
 	if (selected) {
 		if (hasSelectedSportSession(req, selected)) {
-			// ログイン済みなら選択中アプリのトップへプロキシ
-			req.url = "/";
+			// ログイン済みなら選択中アプリへプロキシ。
+			// req.url を上書きすると /?month=YYYY-MM のクエリが消えるため保持する。
 			proxy(req, res, () => {});
 			return;
 		}
