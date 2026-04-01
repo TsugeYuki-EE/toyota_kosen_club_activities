@@ -499,18 +499,11 @@ def render(
     cpu_bar = make_bar(system.cpu_percent, 0.0, 100.0)
     mem_bar = make_bar(system.mem_percent, 0.0, 100.0)
     temp_bar = make_bar(system.temp_c if system.temp_c is not None else 0.0, 20.0, 90.0)
+    draw_line(stdscr, 3, f"CPU: {cpu_bar} {system.cpu_percent:5.1f}%", width)
+    draw_line(stdscr, 4, f"TEMP: {temp_bar} {temp_text:>7}   MEM: {mem_bar} {system.mem_percent:4.1f}%", width)
     draw_line(
         stdscr,
-        3,
-        (
-            f"CPU: {cpu_bar} {system.cpu_percent:5.1f}%\n   TEMP: {temp_bar} {temp_text:>7}   \n"
-            f"MEM: {mem_bar} {system.mem_percent:4.1f}%\n"
-        ),
-        width,
-    )
-    draw_line(
-        stdscr,
-        4,
+        5,
         (
             f"MEM used/total: {system.mem_used_gb:.2f}/{system.mem_total_gb:.2f} GB   "
             f"LOAD: {system.load_1:.2f} {system.load_5:.2f} {system.load_15:.2f}   UPTIME: {system.uptime}"
@@ -518,15 +511,15 @@ def render(
         width,
     )
     graph_width = max(12, min(64, width - 16))
-    draw_line(stdscr, 5, f"CPU hist : {make_sparkline(cpu_hist.list(), graph_width, 0.0, 100.0)}", width)
-    draw_line(stdscr, 6, f"TEMP hist: {make_sparkline(temp_hist.list(), graph_width, 20.0, 90.0)}", width)
-    draw_line(stdscr, 7, f"MEM hist : {make_sparkline(mem_hist.list(), graph_width, 0.0, 100.0)}", width)
+    draw_line(stdscr, 6, f"CPU hist : {make_sparkline(cpu_hist.list(), graph_width, 0.0, 100.0)}", width)
+    draw_line(stdscr, 7, f"TEMP hist: {make_sparkline(temp_hist.list(), graph_width, 20.0, 90.0)}", width)
+    draw_line(stdscr, 8, f"MEM hist : {make_sparkline(mem_hist.list(), graph_width, 0.0, 100.0)}", width)
 
-    draw_line(stdscr, 9, "[Wi-Fi]", width, curses.A_BOLD)
+    draw_line(stdscr, 10, "[Wi-Fi]", width, curses.A_BOLD)
     if wifi.interface is None:
-        draw_line(stdscr, 10, "Wi-Fi interface not found (iw command or wlan interface missing)", width)
+        draw_line(stdscr, 11, "Wi-Fi interface not found (iw command or wlan interface missing)", width)
     elif not wifi.connected:
-        draw_line(stdscr, 10, f"Interface: {wifi.interface}  Status: disconnected", width)
+        draw_line(stdscr, 11, f"Interface: {wifi.interface}  Status: disconnected", width)
     else:
         signal_part = "N/A"
         if wifi.signal_dbm is not None and wifi.signal_percent is not None:
@@ -534,7 +527,7 @@ def render(
         bitrate_part = wifi.tx_bitrate or "N/A"
         draw_line(
             stdscr,
-            10,
+            11,
             (
                 f"Interface: {wifi.interface}  SSID: {wifi.ssid or 'N/A'}  "
                 f"Signal: {signal_part}  Tx: {bitrate_part}"
@@ -543,7 +536,7 @@ def render(
         )
         draw_line(
             stdscr,
-            11,
+            12,
             (
                 f"Wi-Fi data now RX/TX: {net.rx_mbps:6.2f}/{net.tx_mbps:6.2f} Mbps   "
                 f"Total RX/TX: {net.rx_total_gb:.2f}/{net.tx_total_gb:.2f} GB   "
@@ -552,10 +545,10 @@ def render(
             width,
         )
 
-    draw_line(stdscr, 12, "[Access / Internet]", width, curses.A_BOLD)
+    draw_line(stdscr, 13, "[Access / Internet]", width, curses.A_BOLD)
     draw_line(
         stdscr,
-        13,
+        14,
         (
             f"Active access: {access.active_connections}  "
             f"Unique client IPs(now): {access.unique_remote_ips}  "
@@ -565,7 +558,7 @@ def render(
     )
     draw_line(
         stdscr,
-        14,
+        15,
         (
             f"Interface: {net.interface or 'N/A'}  "
             f"RX: {net.rx_mbps:6.2f} Mbps  TX: {net.tx_mbps:6.2f} Mbps  "
@@ -574,23 +567,23 @@ def render(
         width,
     )
     net_max = max(1.0, max(rx_hist.list()[-graph_width:] + tx_hist.list()[-graph_width:] if rx_hist.list() and tx_hist.list() else [1.0]))
-    draw_line(stdscr, 15, f"RX hist  : {make_sparkline(rx_hist.list(), graph_width, 0.0, net_max)}", width)
-    draw_line(stdscr, 16, f"TX hist  : {make_sparkline(tx_hist.list(), graph_width, 0.0, net_max)}", width)
+    draw_line(stdscr, 16, f"RX hist  : {make_sparkline(rx_hist.list(), graph_width, 0.0, net_max)}", width)
+    draw_line(stdscr, 17, f"TX hist  : {make_sparkline(tx_hist.list(), graph_width, 0.0, net_max)}", width)
 
-    draw_line(stdscr, 18, "[Docker Containers]", width, curses.A_BOLD)
+    draw_line(stdscr, 19, "[Docker Containers]", width, curses.A_BOLD)
     if not docker_ok:
-        draw_line(stdscr, 19, f"Docker unavailable: {docker_err}", width)
+        draw_line(stdscr, 20, f"Docker unavailable: {docker_err}", width)
     else:
         running_count = sum(1 for c in containers if c.state == "running")
         draw_line(
             stdscr,
-            19,
+            20,
             f"Total: {len(containers)}  Running: {running_count}  Stopped: {len(containers) - running_count}",
             width,
         )
-        draw_line(stdscr, 20, "NAME                 STATE     STATUS                           PORTS", width, curses.A_UNDERLINE)
+        draw_line(stdscr, 21, "NAME                 STATE     STATUS                           PORTS", width, curses.A_UNDERLINE)
 
-        line = 21
+        line = 22
         for c in containers:
             if line >= height - 1:
                 break
