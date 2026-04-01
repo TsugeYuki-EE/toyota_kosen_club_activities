@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "ReleaseNote" (
+CREATE TABLE IF NOT EXISTS "ReleaseNote" (
     "id" TEXT NOT NULL,
     "version" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -11,7 +11,19 @@ CREATE TABLE "ReleaseNote" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ReleaseNote_version_key" ON "ReleaseNote"("version");
+CREATE UNIQUE INDEX IF NOT EXISTS "ReleaseNote_version_key" ON "ReleaseNote"("version");
 
 -- AddForeignKey
-ALTER TABLE "ReleaseNote" ADD CONSTRAINT "ReleaseNote_createdByMemberId_fkey" FOREIGN KEY ("createdByMemberId") REFERENCES "Member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'ReleaseNote_createdByMemberId_fkey'
+    ) THEN
+        ALTER TABLE "ReleaseNote"
+            ADD CONSTRAINT "ReleaseNote_createdByMemberId_fkey"
+            FOREIGN KEY ("createdByMemberId") REFERENCES "Member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END
+$$;
