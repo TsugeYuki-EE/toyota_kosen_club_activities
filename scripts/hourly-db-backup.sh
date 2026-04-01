@@ -38,9 +38,11 @@ backup_one() {
 
   timestamp="$(date +"%Y%m%d-%H0000")"
   output_file="$output_dir/${label}-${timestamp}.dump"
+  temp_file="${output_file}.tmp"
 
   echo "[$(date -Iseconds)] backup start: $db_name -> $output_file"
-  PGPASSWORD="$POSTGRES_PASSWORD" pg_dump \
+  rm -f "$temp_file"
+  if PGPASSWORD="$POSTGRES_PASSWORD" pg_dump \
     --host "$PGHOST" \
     --port "$PGPORT" \
     --username "$POSTGRES_USER" \
@@ -48,7 +50,13 @@ backup_one() {
     --no-owner \
     --no-privileges \
     --dbname "$db_name" \
-    --file "$output_file"
+    --file "$temp_file"; then
+    mv -f "$temp_file" "$output_file"
+  else
+    rm -f "$temp_file" "$output_file"
+    echo "[$(date -Iseconds)] backup failed: $db_name" >&2
+    return 1
+  fi
 
   # 3日より古いバックアップを削除
   find "$output_dir" -type f -name "$label-*.dump" -mmin +"$RETENTION_MINUTES" -delete

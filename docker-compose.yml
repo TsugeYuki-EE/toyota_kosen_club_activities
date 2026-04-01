@@ -52,7 +52,7 @@ services:
   db-backup:
     image: postgres:16-alpine
     container_name: club-activities-db-backup
-    restart: "no"
+    restart: unless-stopped
     init: true
     profiles: ["backup"]
     depends_on:
