@@ -13,6 +13,7 @@ import {
 import { isJapaneseHolidayDateKey } from "@/lib/japanese-holiday";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
+import { fetchActiveAnnouncement } from "@/lib/dual-db-content";
 import { FloatingMobileTabs } from "./floating-mobile-tabs";
 import styles from "./home-dashboard.module.css";
 
@@ -101,7 +102,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   const monthParam = toMonthParam(currentMonth);
   const monthQuery = `?month=${monthParam}`;
 
-  const [events, matches, practiceMenus, activeAnnouncement] = await Promise.all([
+  const [events, matches, practiceMenus] = await Promise.all([
     prisma.attendanceEvent.findMany({
       where: {
         scheduledAt: {
@@ -133,14 +134,8 @@ export default async function Home({ searchParams }: HomePageProps) {
       },
       orderBy: { practiceDate: "asc" },
     }),
-    prisma.adminAnnouncement.findFirst({
-      where: {
-        startsAt: { lte: today },
-        endsAt: { gte: today },
-      },
-      orderBy: { createdAt: "desc" },
-    }),
   ]);
+  const activeAnnouncement = await fetchActiveAnnouncement(today);
 
   const scheduleMap = new Map<string, Set<"練習" | "試合">>();
   const eventDetailMap = new Map<string, { practice: string[]; match: string[] }>();

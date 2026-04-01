@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
 import { addJstDays, nowInJst, toDateTimeLocalValue } from "@/lib/date-format";
 import { LocalDateTime } from "@/components/local-date-time";
-import { prisma } from "@/lib/prisma";
+import { fetchUnifiedAnnouncements } from "@/lib/dual-db-content";
 import styles from "../admin-dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -51,17 +51,7 @@ export default async function SuperAdminPage({ searchParams }: SuperAdminPagePro
   const defaultAnnouncementStart = toDateTimeLocalValue(now);
   const defaultAnnouncementEnd = toDateTimeLocalValue(nextWeek);
 
-  const announcements = await prisma.adminAnnouncement.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    select: {
-      id: true,
-      message: true,
-      startsAt: true,
-      endsAt: true,
-      createdAt: true,
-    },
-  });
+  const announcements = await fetchUnifiedAnnouncements();
 
   return (
     <main className={styles.page}>
@@ -119,6 +109,9 @@ export default async function SuperAdminPage({ searchParams }: SuperAdminPagePro
                       <input type="hidden" name="intent" value="delete" />
                       <input type="hidden" name="redirectTo" value="/admin/super-admin" />
                       <input type="hidden" name="announcementId" value={announcement.id} />
+                      <input type="hidden" name="message" value={announcement.message} />
+                      <input type="hidden" name="startsAtIso" value={announcement.startsAt.toISOString()} />
+                      <input type="hidden" name="endsAtIso" value={announcement.endsAt.toISOString()} />
                       <button type="submit" className={styles.dangerButton}>削除</button>
                     </form>
                   </td>

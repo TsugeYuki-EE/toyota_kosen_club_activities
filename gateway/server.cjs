@@ -268,10 +268,21 @@ function launchStandaloneApp(label, appDir, port, env) {
 	childProcesses.push(child);
 }
 
-function buildAppEnv(baseEnv, dbUrl, adminKey, nodeOptions, appBaseUrl, clubPassword, superAdminNickname, superAdminLoginPassword) {
+function buildAppEnv(
+	baseEnv,
+	dbUrl,
+	peerDbUrl,
+	adminKey,
+	nodeOptions,
+	appBaseUrl,
+	clubPassword,
+	superAdminNickname,
+	superAdminLoginPassword,
+) {
 	return {
 		...baseEnv,
 		DATABASE_URL: dbUrl,
+		PEER_DATABASE_URL: peerDbUrl,
 		ADMIN_VIEW_KEY: adminKey,
 		CLUB_PASSWORD: clubPassword,
 		SUPER_ADMIN_NICKNAME: superAdminNickname,
@@ -288,6 +299,7 @@ async function startInternalApps() {
 	const handballEnv = buildAppEnv(
 		process.env,
 		HANDBALL_LOCAL_DB_URL,
+		TABLE_TENNIS_LOCAL_DB_URL,
 		ensureRequiredEnv("HANDBALL_ADMIN_VIEW_KEY"),
 		process.env.HANDBALL_NODE_OPTIONS || "--max-old-space-size=384",
 		process.env.HANDBALL_PUBLIC_BASE_URL || `http://localhost:${HANDBALL_EXTERNAL_PORT}`,
@@ -298,6 +310,7 @@ async function startInternalApps() {
 	const tableTennisEnv = buildAppEnv(
 		process.env,
 		TABLE_TENNIS_LOCAL_DB_URL,
+		HANDBALL_LOCAL_DB_URL,
 		ensureRequiredEnv("TABLE_TENNIS_ADMIN_VIEW_KEY"),
 		process.env.TABLE_TENNIS_NODE_OPTIONS || "--max-old-space-size=384",
 		process.env.TABLE_TENNIS_PUBLIC_BASE_URL || `http://localhost:${TABLE_TENNIS_EXTERNAL_PORT}`,

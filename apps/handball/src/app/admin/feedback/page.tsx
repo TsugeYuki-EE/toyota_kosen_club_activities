@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
 import { LocalDateTime } from "@/components/local-date-time";
 import { prisma } from "@/lib/prisma";
+import { fetchPeerFeedbacks } from "@/lib/dual-db-content";
 import styles from "./feedback-admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackP
     );
   }
 
-  const [feedbacks, totalCount] = await Promise.all([
+  const [localFeedbacks, peerFeedbacks] = await Promise.all([
     prisma.feedback.findMany({
       select: {
         id: true,
@@ -59,11 +60,17 @@ export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackP
       orderBy: {
         createdAt: "desc",
       },
-      skip,
-      take: PAGE_SIZE,
     }),
-    prisma.feedback.count(),
+    fetchPeerFeedbacks(),
   ]);
+
+  const mergedFeedbacks = [
+    ...localFeedbacks.map((item) => ({ ...item, source: "ハンドボール" })),
+    ...peerFeedbacks.map((item) => ({ ...item, source: "卓球" })),
+  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  const totalCount = mergedFeedbacks.length;
+  const feedbacks = mergedFeedbacks.slice(skip, skip + PAGE_SIZE);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const hasPrev = currentPage > 1;
@@ -90,6 +97,7 @@ export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackP
             {feedbacks.map((feedback) => (
               <li key={feedback.id} className={styles.item}>
                 <div className={styles.meta}>
+                  <span>種別: {feedback.source}</span>
                   <span>送信者: {feedback.memberNameSnapshot}</span>
                   <span>日時: <LocalDateTime value={feedback.createdAt} /></span>
                 </div>

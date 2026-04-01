@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAnnouncementSchema } from "@/lib/form-schemas";
 import { isSuperAdminNickname } from "@/lib/admin-access";
 import { getSessionMember } from "@/lib/member-session";
-import { prisma } from "@/lib/prisma";
 import { buildAppUrl } from "@/lib/request-utils";
 import { parseJstDateTimeInputToUtc } from "@/lib/date-format";
+import { createAnnouncementInAllDbs, deleteAnnouncementInAllDbs } from "@/lib/dual-db-content";
 
 // admin ユーザーのみが通達メッセージを登録できます。
 export async function POST(request: NextRequest) {
@@ -27,12 +27,22 @@ export async function POST(request: NextRequest) {
 
   if (intent === "delete") {
     const announcementId = String(formData.get("announcementId") || "");
+    const message = String(formData.get("message") || "");
+    const startsAtIso = String(formData.get("startsAtIso") || "");
+    const endsAtIso = String(formData.get("endsAtIso") || "");
     if (!announcementId) {
       redirectUrl.searchParams.set("error", "削除対象が指定されていません");
       return NextResponse.redirect(redirectUrl, 303);
     }
 
-    await prisma.adminAnnouncement.deleteMany({ where: { id: announcementId } });
+    const startsAt = startsAtIso ? new Date(startsAtIso) : undefined;
+    const endsAt = endsAtIso ? new Date(endsAtIso) : undefined;
+    await deleteAnnouncementInAllDbs({
+      announcementId,
+      message: message || undefined,
+      startsAt: startsAt && !Number.isNaN(startsAt.getTime()) ? startsAt : undefined,
+      endsAt: endsAt && !Number.isNaN(endsAt.getTime()) ? endsAt : undefined,
+    });
     redirectUrl.searchParams.set("ok", "announcement-deleted");
     return NextResponse.redirect(redirectUrl, 303);
   }
@@ -65,13 +75,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(createRedirectUrl, 303);
   }
 
-  await prisma.adminAnnouncement.create({
-    data: {
-      message: parsed.data.message,
-      startsAt,
-      endsAt,
-      createdByMemberId: member.id,
-    },
+  await createAnnouncementInAllDbs({
+    message: parsed.data.message,
+    startsAt,
+    endsAt,
+    authorId: member.id,
+    authorNickname: member.nickname,
   });
 
   createRedirectUrl.searchParams.set("ok", "announcement");

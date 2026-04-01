@@ -1,4 +1,4 @@
-﻿import { prisma } from "@/lib/prisma";
+﻿import { fetchUnifiedReleaseNotes } from "@/lib/dual-db-content";
 import { LocalDateTime } from "@/components/local-date-time";
 import styles from "./release-notes.module.css";
 
@@ -15,23 +15,7 @@ export const revalidate = 300;
 
 async function getReleaseNotesSafely() {
   try {
-    return await prisma.releaseNote.findMany({
-      select: {
-        id: true,
-        version: true,
-        title: true,
-        content: true,
-        createdBy: {
-          select: {
-            nickname: true,
-          },
-        },
-        createdAt: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    return await fetchUnifiedReleaseNotes();
   } catch (error) {
     // Docker build時などDB未接続環境でもプリレンダを失敗させない。
     console.error("[release-notes] failed to fetch release notes; fallback to empty list", error);

@@ -14,6 +14,7 @@ import { isJapaneseHolidayDateKey } from "@/lib/japanese-holiday";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
+import { fetchActiveAnnouncement } from "@/lib/dual-db-content";
 import { FloatingMobileTabs } from "./floating-mobile-tabs";
 import styles from "./home-dashboard.module.css";
 
@@ -104,7 +105,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   const monthParam = toMonthParam(currentMonth);
   const monthQuery = `?month=${monthParam}`;
 
-  const [events, practiceMenus, activeAnnouncement, attendanceRecords, latestNote] = await Promise.all([
+  const [events, practiceMenus, attendanceRecords, latestNote] = await Promise.all([
     prisma.attendanceEvent.findMany({
       where: {
         scheduledAt: {
@@ -126,13 +127,6 @@ export default async function Home({ searchParams }: HomePageProps) {
       },
       orderBy: { practiceDate: "asc" },
     }),
-    prisma.adminAnnouncement.findFirst({
-      where: {
-        startsAt: { lte: today },
-        endsAt: { gte: today },
-      },
-      orderBy: { createdAt: "desc" },
-    }),
     prisma.attendanceRecord.findMany({
       where: {
         memberId: member.id,
@@ -153,6 +147,7 @@ export default async function Home({ searchParams }: HomePageProps) {
       orderBy: { createdAt: "desc" },
     }),
   ]);
+  const activeAnnouncement = await fetchActiveAnnouncement(today);
 
   // 出席率を計算
   const validAttendances = attendanceRecords.filter(

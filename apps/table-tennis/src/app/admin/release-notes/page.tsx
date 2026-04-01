@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
 import { LocalDateTime } from "@/components/local-date-time";
-import { prisma } from "@/lib/prisma";
+import { fetchUnifiedReleaseNotes } from "@/lib/dual-db-content";
 import styles from "../admin-dashboard.module.css";
 
 type PageProps = {
@@ -13,23 +13,7 @@ type PageProps = {
 
 async function getReleaseNotesSafely() {
   try {
-    const notes = await prisma.releaseNote.findMany({
-      select: {
-        id: true,
-        version: true,
-        title: true,
-        content: true,
-        createdBy: {
-          select: {
-            nickname: true,
-          },
-        },
-        createdAt: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const notes = await fetchUnifiedReleaseNotes();
 
     return { notes, loadError: null as string | null };
   } catch (error) {

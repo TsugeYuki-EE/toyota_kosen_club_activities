@@ -1,30 +1,13 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { releaseNoteSchema } from "@/lib/form-schemas";
 import { getSessionMember } from "@/lib/member-session";
 import { isSuperAdminNickname } from "@/lib/admin-access";
+import { createReleaseNoteInAllDbs, fetchUnifiedReleaseNotes, hasReleaseNoteVersion } from "@/lib/dual-db-content";
 
 // GET: 全ユーザーがリリースノート一覧を取得できます
 export async function GET() {
   try {
-    const releaseNotes = await prisma.releaseNote.findMany({
-      select: {
-        id: true,
-        version: true,
-        title: true,
-        content: true,
-        createdBy: {
-          select: {
-            id: true,
-            nickname: true,
-          },
-        },
-        createdAt: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const releaseNotes = await fetchUnifiedReleaseNotes();
 
     return Response.json(
       { releaseNotes },
@@ -70,21 +53,18 @@ export async function POST(request: Request) {
       redirect(`${redirectTo}?error=${encodeURIComponent(errors)}`);
     }
 
-    const existingVersion = await prisma.releaseNote.findUnique({
-      where: { version: parsed.data.version },
-    });
+    const existingVersion = await hasReleaseNoteVersion(parsed.data.version);
 
     if (existingVersion) {
       redirect(`${redirectTo}?error=${encodeURIComponent("このバージョンは既に存在します")}`);
     }
 
-    await prisma.releaseNote.create({
-      data: {
-        version: parsed.data.version,
-        title: parsed.data.title,
-        content: parsed.data.content,
-        createdByMemberId: member.id,
-      },
+    await createReleaseNoteInAllDbs({
+      version: parsed.data.version,
+      title: parsed.data.title,
+      content: parsed.data.content,
+      authorId: member.id,
+      authorNickname: member.nickname,
     });
 
     redirect(`${redirectTo}?ok=${encodeURIComponent("リリースノートを作成しました")}`);
