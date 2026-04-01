@@ -503,8 +503,8 @@ def render(
         stdscr,
         3,
         (
-            f"CPU: {cpu_bar} {system.cpu_percent:5.1f}%   TEMP: {temp_bar} {temp_text:>7}   "
-            f"MEM: {mem_bar} {system.mem_percent:4.1f}%"
+            f"CPU: {cpu_bar} {system.cpu_percent:5.1f}%\n   TEMP: {temp_bar} {temp_text:>7}   \n"
+            f"MEM: {mem_bar} {system.mem_percent:4.1f}%\n"
         ),
         width,
     )
