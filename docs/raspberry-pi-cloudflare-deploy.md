@@ -242,6 +242,20 @@ docker compose up -d --build
 docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d
 ```
 
+### 運用ルール（重要）
+
+- 通常起動もバックアップ起動も必ず `.env.tunnel` を付ける
+
+```bash
+docker compose --env-file .env.tunnel up -d --build
+```
+
+- バックアップは profile 指定で起動する
+
+```bash
+docker compose --env-file .env.tunnel --profile backup up -d db-backup
+```
+
 ## 6. 動作確認
 
 ```bash
