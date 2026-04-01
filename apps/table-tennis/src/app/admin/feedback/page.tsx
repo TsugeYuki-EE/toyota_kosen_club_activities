@@ -13,6 +13,13 @@ type AdminFeedbackPageProps = {
   searchParams: Promise<{ page?: string }>;
 };
 
+type SharedFeedback = {
+  id: string;
+  memberNameSnapshot: string;
+  content: string;
+  createdAt: Date;
+};
+
 export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackPageProps) {
   const params = await searchParams;
   const parsedPage = Number.parseInt(params.page || "1", 10);
@@ -49,7 +56,7 @@ export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackP
     );
   }
 
-  const [localFeedbacks, peerFeedbacks] = await Promise.all([
+  const [localFeedbacks, peerFeedbacksRaw] = await Promise.all([
     prisma.feedback.findMany({
       select: {
         id: true,
@@ -63,6 +70,7 @@ export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackP
     }),
     fetchPeerFeedbacks(),
   ]);
+  const peerFeedbacks = peerFeedbacksRaw as SharedFeedback[];
 
   const mergedFeedbacks = [
     ...localFeedbacks.map((item) => ({ ...item, source: "卓球" })),
