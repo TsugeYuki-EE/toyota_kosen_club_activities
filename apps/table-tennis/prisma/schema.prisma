@@ -67,19 +67,20 @@ model Member {
 
 /// 出席確認したいイベント本体です。
 model AttendanceEvent {
-  id          String             @id @default(cuid())
-  eventType   AttendanceEventType @default(PRACTICE)
-  title       String
-  scheduledAt DateTime
+  id            String              @id @default(cuid())
+  eventType     AttendanceEventType  @default(PRACTICE)
+  title         String
+  scheduledAt   DateTime
   matchOpponent String?
-  matchDetail String?
-  note        String?
-  createdAt   DateTime           @default(now())
-  records     AttendanceRecord[]
-  tokens      InputToken[]
-  matches     MatchRecord[]
+  matchDetail   String?
+  note          String?
+  reminderSentAt DateTime?
+  createdAt     DateTime            @default(now())
+  records       AttendanceRecord[]
+  tokens        InputToken[]
+  matches       MatchRecord[]
   matchFeedbacks MatchFeedback[]
-  draft       MatchScoreDraft?
+  draft         MatchScoreDraft?
 }
 
 model AttendanceRecord {

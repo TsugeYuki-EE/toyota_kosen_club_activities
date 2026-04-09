@@ -13,6 +13,7 @@
 - 管理者通達の表示
 - リリースノート管理/閲覧
 - フィードバック送信/閲覧
+- LINE通知による出欠登録リマインド
 
 ## 現在のWebページ構成
 
@@ -74,7 +75,7 @@
 ### 主なモデル
 
 - `Member`: ユーザー本体（役割、目標、管理画面アクセス可否）
-- `AttendanceEvent`: 出席イベント（練習/試合）
+- `AttendanceEvent`: 出席イベント（練習/試合、リマインド送信状態を含む）
 - `AttendanceRecord`: 部員ごとの出席回答
 - `WeightRecord`: 部員ごとの体重履歴
 - `MatchRecord`: 試合記録（対戦相手、点数）
@@ -164,6 +165,8 @@ Dockerデプロイを想定しています。
 	- `DATABASE_URL`（またはフォールバック対象の接続変数）
 	- `ADMIN_VIEW_KEY`
 	- `NEXT_PUBLIC_APP_BASE_URL`（未設定時は `RENDER_EXTERNAL_URL` を利用）
+	- `LINE_MESSAGING_API_CHANNEL_ACCESS_TOKEN`（LINE Messaging API のチャネルアクセストークン）
+	- `LINE_MESSAGING_API_TARGET_ID`（通知先の userId / groupId / roomId）
 
 `HTTP ERROR 502` の場合は、ログで `PORT=` 表示後に `Ready` まで到達しているか確認してください。
 
@@ -173,6 +176,10 @@ Dockerデプロイを想定しています。
 - `POSTGRES_PRISMA_URL` / `POSTGRES_URL` / `NEON_DATABASE_URL` / `RENDER_POSTGRESQL_URL`: `DATABASE_URL` の代替
 - `ADMIN_VIEW_KEY`: 管理画面キー
 - `RENDER_EXTERNAL_URL`: Render公開URL
+- `LINE_MESSAGING_API_CHANNEL_ACCESS_TOKEN`: LINE Messaging API のチャネルアクセストークン
+- `LINE_MESSAGING_API_TARGET_ID`: 通知先の userId / groupId / roomId
+
+LINE通知は、上記2つが設定されているときだけ送信されます。予定開始90分前に、対象日の出欠登録を促すメッセージを自動送信します。
 
 ## 開発用コマンド
 

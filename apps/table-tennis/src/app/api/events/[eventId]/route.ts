@@ -56,6 +56,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         matchOpponent: parsed.data.eventType === AttendanceEventType.MATCH ? parsed.data.matchOpponent || null : null,
         matchDetail: parsed.data.eventType === AttendanceEventType.MATCH ? parsed.data.matchDetail || null : null,
         note: parsed.data.note || null,
+        reminderSentAt: null,
       },
     });
 
