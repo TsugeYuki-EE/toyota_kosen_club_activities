@@ -31,6 +31,25 @@
   white-space: pre-wrap;
 }
 
+.emailReminderWindow {
+  border-radius: 14px;
+  border: 1px solid #e4c273;
+  background: linear-gradient(180deg, #fff8e8 0%, #fff2d6 100%);
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.emailReminderWindow h2 {
+  color: #7a4b00;
+  font-size: 18px;
+}
+
+.emailReminderWindow p {
+  color: #6d4300;
+  line-height: 1.7;
+}
+
 .hero {
   background: linear-gradient(140deg, #fff7f8 0%, #e7fff5 100%);
   border: 1px solid #e3d3d7;
@@ -304,6 +323,27 @@
   color: #4a3f42;
 }
 
+.statusLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  font-size: 12px;
+  color: #4a3f42;
+}
+
+.statusLegend strong {
+  display: inline-flex;
+  min-width: 1.5em;
+  justify-content: center;
+  margin-right: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #e9eef2;
+  color: #506473;
+  font-weight: 700;
+}
+
 .weekdays,
 .calendarGrid {
   display: grid;
@@ -346,9 +386,30 @@
   opacity: 0.45;
 }
 
+.dayHasSupplement {
+  border-color: #efd0d0;
+  box-shadow: inset 0 0 0 1px rgba(215, 57, 57, 0.05);
+}
+
 .today {
   border-color: #be1026;
   background: #eff8fe;
+  animation: todayBorderPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes todayBorderPulse {
+  0% {
+    border-color: #be1026;
+    box-shadow: 0 0 0 0 rgba(190, 16, 38, 0.32);
+  }
+  50% {
+    border-color: #ef4a5f;
+    box-shadow: 0 0 0 3px rgba(239, 74, 95, 0.2);
+  }
+  100% {
+    border-color: #be1026;
+    box-shadow: 0 0 0 0 rgba(190, 16, 38, 0.32);
+  }
 }
 
 .dayCellHoliday {
@@ -421,6 +482,16 @@
 .unknown {
   background: #e9eef2;
   color: #506473;
+}
+
+.registeredBadge {
+  background: #daf4e3;
+  color: #1e6b37;
+}
+
+.pendingBadge {
+  background: #ffe1e1;
+  color: #983131;
 }
 
 .badge,

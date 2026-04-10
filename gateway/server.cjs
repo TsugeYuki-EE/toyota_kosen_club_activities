@@ -20,9 +20,11 @@ const POSTGRES_USER = process.env.POSTGRES_USER || "club";
 const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || "";
 const HANDBALL_LOCAL_DB_URL = `postgresql://${encodeURIComponent(POSTGRES_USER)}:${encodeURIComponent(POSTGRES_PASSWORD)}@postgres:5432/handball_notes?schema=public`;
 const TABLE_TENNIS_LOCAL_DB_URL = `postgresql://${encodeURIComponent(POSTGRES_USER)}:${encodeURIComponent(POSTGRES_PASSWORD)}@postgres:5432/table_tennis_notes?schema=public`;
+const HANDBALL_INTERNAL_PORT = Number(process.env.HANDBALL_PORT || 3001);
+const TABLE_TENNIS_INTERNAL_PORT = Number(process.env.TABLE_TENNIS_PORT || 3002);
 
-const handballTarget = `http://127.0.0.1:${process.env.HANDBALL_PORT || 3001}`;
-const tableTennisTarget = `http://127.0.0.1:${process.env.TABLE_TENNIS_PORT || 3002}`;
+const handballTarget = `http://127.0.0.1:${HANDBALL_INTERNAL_PORT}`;
+const tableTennisTarget = `http://127.0.0.1:${TABLE_TENNIS_INTERNAL_PORT}`;
 
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${LISTEN_PORT}`;
 
@@ -122,8 +124,8 @@ const proxy = createProxyMiddleware({
 	changeOrigin: true,
 	xfwd: true,
 	ws: true,
-	proxyTimeout: 15000,
-	timeout: 15000,
+	proxyTimeout: 60000,
+	timeout: 60000,
 	on: {
 		error: (err, req, res) => {
 			console.error("proxy error(on.error):", err?.message || err);
@@ -243,6 +245,26 @@ async function waitForPostgres() {
 	throw new Error("postgres did not become ready in time");
 }
 
+async function waitForService(host, port, label) {
+	const maxAttempts = 120;
+
+	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+		const ok = await canConnectPostgres(host, port);
+		if (ok) {
+			console.log(`${label} is ready`);
+			return;
+		}
+
+		if (attempt % 10 === 0) {
+			console.warn(`waiting for ${label}... (${attempt}/${maxAttempts})`);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+
+	throw new Error(`${label} did not become ready in time`);
+}
+
 function launchStandaloneApp(label, appDir, port, env) {
 	const nestedStandalonePath = `.next/standalone/${appDir.replace(/\\/g, "/")}/server.js`;
 	const serverEntry = fs.existsSync(`${appDir}/${nestedStandalonePath}`)
@@ -339,8 +361,13 @@ async function startInternalApps() {
 		console.warn("RUN_DB_MIGRATIONS=false: skip prisma migrations");
 	}
 
-	launchStandaloneApp("handball", "apps/handball", Number(process.env.HANDBALL_PORT || 3001), handballEnv);
-	launchStandaloneApp("table-tennis", "apps/table-tennis", Number(process.env.TABLE_TENNIS_PORT || 3002), tableTennisEnv);
+	launchStandaloneApp("handball", "apps/handball", HANDBALL_INTERNAL_PORT, handballEnv);
+	launchStandaloneApp("table-tennis", "apps/table-tennis", TABLE_TENNIS_INTERNAL_PORT, tableTennisEnv);
+
+	await Promise.all([
+		waitForService("127.0.0.1", HANDBALL_INTERNAL_PORT, "handball app"),
+		waitForService("127.0.0.1", TABLE_TENNIS_INTERNAL_PORT, "table-tennis app"),
+	]);
 }
 
 app.get("/health", (_req, res) => {

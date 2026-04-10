@@ -126,6 +126,15 @@ export default async function SuperAdminPage({ searchParams }: SuperAdminPagePro
       </section>
 
       <section className={styles.card}>
+        <h2>確認メール テスト送信</h2>
+        <p className={styles.meta}>登録済みメールアドレスを持つ全部員に、確認メールを一斉送信します（テスト用）。</p>
+        <form action="/api/admin-reminders/test" method="post" className={styles.form}>
+          <input type="hidden" name="redirectTo" value="/admin/super-admin" />
+          <button type="submit">全部員へ確認メールをテスト送信する</button>
+        </form>
+      </section>
+
+      <section className={styles.card}>
         <h2>リリースノート管理</h2>
         <p className={styles.meta}>アプリのバージョン情報と変更内容を管理します。</p>
         <div className={styles.inlineActions}>

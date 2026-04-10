@@ -9,6 +9,7 @@ export type SessionMember = {
   id: string;
   name: string;
   nickname: string | null;
+  email: string | null;
   grade: string | null;
   yearlyGoal: string | null;
   monthlyGoal: string | null;
@@ -31,6 +32,7 @@ export async function getSessionMember() {
       id: true,
       name: true,
       nickname: true,
+      email: true,
       grade: true,
       yearlyGoal: true,
       monthlyGoal: true,

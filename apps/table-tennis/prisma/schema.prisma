@@ -46,6 +46,7 @@ model Member {
   id                  String             @id @default(cuid())
   name                String
   nickname            String?            @unique
+  email               String?            @unique
   grade               String?
   yearlyGoal          String?
   monthlyGoal         String?

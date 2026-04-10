@@ -6,6 +6,7 @@ const dateOrDateTimeRegex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
 
 // 部員アカウントのニックネーム登録フォームです。
 export const memberAccountRegisterSchema = z.object({
+  email: z.string().trim().email("メールアドレスの形式が不正です"),
   nickname: z
     .string()
     .trim()
@@ -32,6 +33,7 @@ export const memberUpdateSchema = z.object({
 
 // 本人プロフィール更新フォームです。
 export const selfProfileUpdateSchema = z.object({
+  email: z.string().trim().email("メールアドレスの形式が不正です"),
   nickname: z
     .string()
     .trim()

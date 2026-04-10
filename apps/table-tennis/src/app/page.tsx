@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { AttendanceEventType } from "@prisma/client";
+import { AttendanceEventType, AttendanceStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
 import {
   addJstDays,
@@ -158,6 +158,13 @@ export default async function Home({ searchParams }: HomePageProps) {
 
   const scheduleMap = new Map<string, Set<"練習" | "試合">>();
   const eventDetailMap = new Map<string, { practice: string[]; match: string[] }>();
+  const attendanceStatusByDateMap = new Map<string, { registered: number; pending: number }>();
+  const hasSupplementByDateMap = new Map<string, boolean>();
+  const eventResponseStatusMap = new Map<string, AttendanceStatus>();
+
+  for (const record of attendanceRecords) {
+    eventResponseStatusMap.set(record.eventId, record.status);
+  }
 
   for (const event of events) {
     const key = toDateKey(event.scheduledAt);
@@ -175,7 +182,17 @@ export default async function Home({ searchParams }: HomePageProps) {
         details.practice.push(detailText);
       }
       eventDetailMap.set(key, details);
+      hasSupplementByDateMap.set(key, true);
     }
+
+    const responseStatus = eventResponseStatusMap.get(event.id);
+    const statusSummary = attendanceStatusByDateMap.get(key) || { registered: 0, pending: 0 };
+    if (!responseStatus || responseStatus === AttendanceStatus.UNKNOWN) {
+      statusSummary.pending += 1;
+    } else {
+      statusSummary.registered += 1;
+    }
+    attendanceStatusByDateMap.set(key, statusSummary);
   }
 
   for (const practice of practiceMenus) {
@@ -188,6 +205,13 @@ export default async function Home({ searchParams }: HomePageProps) {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
+        {!member.email ? (
+          <section className={styles.emailReminderWindow}>
+            <h2>メールアドレスが未登録です</h2>
+            <p>プロフィール欄からメールアドレスを登録してください。</p>
+          </section>
+        ) : null}
+
         {activeAnnouncement ? (
           <section className={styles.announcementWindow}>
             <h2>サーバ管理者からの通達</h2>
@@ -223,6 +247,10 @@ export default async function Home({ searchParams }: HomePageProps) {
               <Link className={styles.monthButton} href={`/?month=${toMonthParam(followingMonth)}`} aria-label="次の月">▶</Link>
             </div>
           </div>
+          <div className={styles.statusLegend}>
+            <span><strong>済</strong></span>
+            <span><strong>未</strong></span>
+          </div>
           <div className={styles.weekdays}>
             {["日", "月", "火", "水", "木", "金", "土"].map((day) => (
               <span
@@ -249,6 +277,8 @@ export default async function Home({ searchParams }: HomePageProps) {
               const isHoliday = isJapaneseHolidayDateKey(key);
               const eventDetails = eventDetailMap.get(key);
               const schedules = Array.from(scheduleMap.get(key) || []);
+              const attendanceStatusSummary = attendanceStatusByDateMap.get(key);
+              const hasSupplement = hasSupplementByDateMap.get(key) === true;
               const isCurrentMonth =
                 dateParts.year === currentMonthParts.year &&
                 dateParts.month === currentMonthParts.month;
@@ -257,6 +287,7 @@ export default async function Home({ searchParams }: HomePageProps) {
               const cellClassName = [
                 styles.dayCell,
                 isCurrentMonth ? "" : styles.outsideMonth,
+                hasSupplement ? styles.dayHasSupplement : "",
                 isToday ? styles.today : "",
                 (isSunday || isHoliday) ? styles.dayCellHoliday : "",
                 isSaturday ? styles.dayCellSaturday : "",
@@ -275,6 +306,20 @@ export default async function Home({ searchParams }: HomePageProps) {
                   className={cellClassName}
                 >
                   <div className={dayNumberClassName}>{dateParts.day}</div>
+                  {attendanceStatusSummary ? (
+                    <div className={styles.statusRow}>
+                      {attendanceStatusSummary.registered > 0 ? (
+                        <span className={`${styles.statusBadge} ${styles.registeredBadge}`}>
+                          済
+                        </span>
+                      ) : null}
+                      {attendanceStatusSummary.pending > 0 ? (
+                        <span className={`${styles.statusBadge} ${styles.pendingBadge}`}>
+                          未
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div className={styles.dayItems}>
                     {schedules.map((item, index) => {
                       const detailsByType = item === "試合" ? eventDetails?.match : eventDetails?.practice;

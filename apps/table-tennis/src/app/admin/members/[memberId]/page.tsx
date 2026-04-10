@@ -54,6 +54,7 @@ export default async function MemberOverviewPage({ params, searchParams }: PageP
       <header className={styles.header}>
         <h1>{member.name} の管理ページ</h1>
         <p>{member.grade || "学年未設定"} / {member.role}</p>
+        <p>メールアドレス: {member.email || "未登録"}</p>
       </header>
 
       <nav className={styles.nav}>

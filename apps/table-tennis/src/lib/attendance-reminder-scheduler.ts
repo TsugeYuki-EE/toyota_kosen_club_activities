@@ -1,6 +1,6 @@
 import { AttendanceEventType } from "@prisma/client";
 import { formatDateTime, toDateKey } from "@/lib/date-format";
-import { isLineNotificationEnabled, sendLineNotification } from "@/lib/line-notification";
+import { isAttendanceReminderEmailEnabled, sendAttendanceReminderEmail } from "@/lib/email-notification";
 import { prisma } from "@/lib/prisma";
 
 const REMINDER_LEAD_MINUTES = 90;
@@ -31,21 +31,7 @@ declare global {
 }
 
 function getPublicBaseUrl(): string {
-  const configuredBaseUrl =
-    process.env.NEXT_PUBLIC_APP_BASE_URL?.trim() ||
-    process.env.PUBLIC_BASE_URL?.trim() ||
-    process.env.RENDER_EXTERNAL_URL?.trim() ||
-    process.env.VERCEL_URL?.trim();
-
-  if (!configuredBaseUrl) {
-    return "http://localhost:3000";
-  }
-
-  if (/^https?:\/\//i.test(configuredBaseUrl)) {
-    return configuredBaseUrl.replace(/\/$/, "");
-  }
-
-  return `https://${configuredBaseUrl.replace(/\/$/, "")}`;
+  return "https://toyotakosenclubnotes.cc";
 }
 
 function buildReminderMessage(event: AttendanceEventReminder): string {
@@ -75,7 +61,7 @@ function buildReminderMessage(event: AttendanceEventReminder): string {
 }
 
 async function sweepOnce(): Promise<ReminderSweepResult> {
-  if (!isLineNotificationEnabled()) {
+  if (!isAttendanceReminderEmailEnabled()) {
     return { scanned: 0, sent: 0, skipped: true };
   }
 
@@ -113,23 +99,62 @@ async function sweepOnce(): Promise<ReminderSweepResult> {
       },
     });
 
+    const recipientMembers = await prisma.member.findMany({
+      where: {
+        email: {
+          not: null,
+        },
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    const recipientEmails = recipientMembers
+      .map((member) => member.email?.trim() || "")
+      .filter((email) => email.length > 0);
+
     let sentCount = 0;
 
     for (const event of dueEvents) {
       const message = buildReminderMessage(event);
-      const result = await sendLineNotification(message);
+      if (recipientEmails.length === 0) {
+        console.warn("Attendance reminder skipped because no recipient emails are registered", {
+          eventId: event.id,
+        });
+        continue;
+      }
 
-      if (result.sent) {
+      let deliveredCount = 0;
+
+      for (const recipientEmail of recipientEmails) {
+        const perRecipientResult = await sendAttendanceReminderEmail({
+          to: recipientEmail,
+          message,
+        });
+
+        if (perRecipientResult.sent) {
+          deliveredCount += 1;
+        } else if (!perRecipientResult.skipped) {
+          console.error("Attendance reminder email failed", {
+            eventId: event.id,
+            recipients: 1,
+            status: perRecipientResult.status,
+            error: perRecipientResult.error,
+          });
+        }
+      }
+
+      if (deliveredCount > 0) {
         await prisma.attendanceEvent.update({
           where: { id: event.id },
           data: { reminderSentAt: new Date() },
         });
         sentCount += 1;
-      } else if (!result.skipped) {
-        console.error("LINE attendance reminder failed", {
+      } else {
+        console.warn("Attendance reminder had no successful email delivery", {
           eventId: event.id,
-          status: result.status,
-          error: result.error,
+          recipients: recipientEmails.length,
         });
       }
     }
@@ -144,6 +169,60 @@ export async function sendDueAttendanceReminders(): Promise<ReminderSweepResult>
   return sweepOnce();
 }
 
+export async function sendTestConfirmationEmailToAllMembers(): Promise<{ total: number; sent: number }> {
+  if (!isAttendanceReminderEmailEnabled()) {
+    return { total: 0, sent: 0 };
+  }
+
+  const recipients = await prisma.member.findMany({
+    where: {
+      email: {
+        not: null,
+      },
+    },
+    select: {
+      email: true,
+    },
+  });
+
+  const emails = recipients
+    .map((member) => member.email?.trim() || "")
+    .filter((email) => email.length > 0);
+
+  if (emails.length === 0) {
+    return { total: 0, sent: 0 };
+  }
+
+  const baseUrl = getPublicBaseUrl();
+  const message = [
+    "【テスト送信】出欠確認メール送信機能の確認です。",
+    "出欠登録をお願いします。",
+    `確認: ${new URL("/", `${baseUrl}/`).toString()}`,
+  ].join("\n");
+
+  let deliveredCount = 0;
+
+  for (const email of emails) {
+    const result = await sendAttendanceReminderEmail({
+      to: email,
+      subject: "【卓球部】出欠確認メール（テスト送信）",
+      message,
+    });
+
+    if (result.sent) {
+      deliveredCount += 1;
+    } else if (!result.skipped) {
+      console.error("Test confirmation email failed", {
+        recipients: 1,
+        status: result.status,
+        error: result.error,
+      });
+    }
+  }
+
+  return { total: emails.length, sent: deliveredCount };
+}
+
 export function startAttendanceReminderScheduler(): void {
   if (globalThis.__tableTennisAttendanceReminderSchedulerStarted) {
     return;
@@ -152,12 +231,12 @@ export function startAttendanceReminderScheduler(): void {
   globalThis.__tableTennisAttendanceReminderSchedulerStarted = true;
 
   void sweepOnce().catch((error) => {
-    console.error("Initial LINE attendance reminder sweep failed", error);
+    console.error("Initial attendance reminder sweep failed", error);
   });
 
   setInterval(() => {
     void sweepOnce().catch((error) => {
-      console.error("LINE attendance reminder sweep failed", error);
+      console.error("Attendance reminder sweep failed", error);
     });
   }, REMINDER_INTERVAL_MS);
 }

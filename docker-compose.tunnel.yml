@@ -5,9 +5,8 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: club-activities-cloudflared
     restart: unless-stopped
     depends_on:
       app:
-        condition: service_started
+        condition: service_healthy
     command: ["tunnel", "--no-autoupdate", "--protocol", "http2", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
