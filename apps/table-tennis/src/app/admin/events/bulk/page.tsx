@@ -43,6 +43,11 @@ export default async function BulkEventCreatePage() {
 
       <section className={styles.card}>
         <h2>入力フォーム</h2>
+        <div className={styles.inlineRow}>
+          <Link className={styles.secondaryLink} href="/admin/events/bulk/defaults">
+            デフォルト入力で一括作成へ
+          </Link>
+        </div>
         <BulkDatePicker defaultDate={defaultDate} />
       </section>
     </main>
