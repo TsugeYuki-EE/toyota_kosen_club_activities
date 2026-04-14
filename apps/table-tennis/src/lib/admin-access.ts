@@ -35,6 +35,10 @@ export function isSuperAdminNickname(nickname: string | null | undefined): boole
   return (nickname || "").toLowerCase() === getSuperAdminNickname().toLowerCase();
 }
 
+export function filterOutSuperAdminMembers<T extends { nickname: string | null }>(members: T[]): T[] {
+  return members.filter((member) => !isSuperAdminNickname(member.nickname));
+}
+
 export function isValidSuperAdminLoginPassword(password: string | null | undefined): boolean {
   return safeEqual(password || "", getSuperAdminLoginPassword());
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
+import { filterOutSuperAdminMembers, getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
 import { prisma } from "@/lib/prisma";
 import { sortMembersByGradeAscending } from "@/lib/member-sort";
 import { ManagerMemberTable } from "./manager-member-table";
@@ -63,7 +63,7 @@ export default async function AdminManagerPage() {
   `;
   const goalMap = new Map<string, GoalRow>(goalRows.map((row: GoalRow) => [row.id, row]));
 
-  const rows = sortMembersByGradeAscending<ManagerMemberSource>(members).map((member: ManagerMemberSource) => {
+  const rows = filterOutSuperAdminMembers(sortMembersByGradeAscending<ManagerMemberSource>(members)).map((member: ManagerMemberSource) => {
     const role: MemberRoleValue = isSuperAdminNickname(member.nickname)
       ? "ADMIN"
       : (member.role as MemberRoleValue);

@@ -1,6 +1,6 @@
 ﻿import Link from "next/link";
 import { headers } from "next/headers";
-import { getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
+import { filterOutSuperAdminMembers, getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
 import { prisma } from "@/lib/prisma";
 import { sortMembersByGradeAscending } from "@/lib/member-sort";
 import { AdminMemberTable } from "./admin-member-table";
@@ -63,7 +63,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     },
   });
 
-  const members = sortMembersByGradeAscending(membersRaw) as AdminMember[];
+  const members = filterOutSuperAdminMembers(sortMembersByGradeAscending(membersRaw) as AdminMember[]);
 
   const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || "";
   const forwardedProto = headerStore.get("x-forwarded-proto") || "https";

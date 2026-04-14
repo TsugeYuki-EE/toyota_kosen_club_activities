@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getJstDayRangeFromDateKey } from "@/lib/date-format";
 import { LocalDate, LocalDateTime, LocalDateTimeRange } from "@/components/local-date-time";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
+import { filterOutSuperAdminMembers } from "@/lib/admin-access";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/member-page-shared.module.css";
@@ -83,7 +84,7 @@ export default async function AttendanceDetailsPage({ params }: PageProps) {
   const [allMembers, events] = await Promise.all([
     prisma.member.findMany({
       select: { id: true, name: true, nickname: true, grade: true },
-    }).then(sortMembersByGradeAscending),
+    }).then(sortMembersByGradeAscending).then(filterOutSuperAdminMembers),
     prisma.attendanceEvent.findMany({
       where: {
         scheduledAt: {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { filterOutSuperAdminMembers } from "@/lib/admin-access";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
 import { prisma } from "@/lib/prisma";
 import { sortMembersByGradeAscending } from "@/lib/member-sort";
@@ -47,7 +48,7 @@ export default async function AdminManagerGoalsPage() {
     },
   })) as GoalMember[];
 
-  const sortedMembers = sortMembersByGradeAscending<GoalMember>(members);
+  const sortedMembers = filterOutSuperAdminMembers(sortMembersByGradeAscending<GoalMember>(members));
 
   return (
     <main className={styles.page}>
