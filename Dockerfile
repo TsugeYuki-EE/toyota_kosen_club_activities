@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 FROM node:22-alpine AS base
 WORKDIR /workspace
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -13,16 +15,13 @@ RUN apk add --no-cache openssl libc6-compat
 
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund \
-  && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 
 COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
-RUN npm --prefix apps/table-tennis ci --no-audit --no-fund \
-  && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm --prefix apps/table-tennis ci --no-audit --no-fund
 
 COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
-RUN npm --prefix apps/handball ci --no-audit --no-fund \
-  && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm --prefix apps/handball ci --no-audit --no-fund
 
 FROM base AS builder
 COPY --from=deps /workspace/node_modules ./node_modules
@@ -38,7 +37,7 @@ ENV NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres?schema=public
 ENV ADMIN_VIEW_KEY=placeholder
 
-RUN sh -c 'set -e; \
+RUN --mount=type=cache,target=/root/.npm sh -c 'set -e; \
   n=0; \
   until [ "$n" -ge 5 ]; do \
     npm --prefix apps/table-tennis run db:generate && break; \
@@ -47,7 +46,7 @@ RUN sh -c 'set -e; \
     sleep $((n * 5)); \
   done; \
   [ "$n" -lt 5 ]'
-RUN sh -c 'set -e; \
+RUN --mount=type=cache,target=/root/.npm sh -c 'set -e; \
   n=0; \
   until [ "$n" -ge 5 ]; do \
     npm --prefix apps/handball run db:generate && break; \
@@ -56,14 +55,17 @@ RUN sh -c 'set -e; \
     sleep $((n * 5)); \
   done; \
   [ "$n" -lt 5 ]'
-RUN npm --prefix apps/table-tennis run build
-RUN npm --prefix apps/handball run build
+RUN --mount=type=cache,target=/root/.npm \
+  --mount=type=cache,target=/workspace/apps/table-tennis/.next/cache \
+  npm --prefix apps/table-tennis run build
+RUN --mount=type=cache,target=/root/.npm \
+  --mount=type=cache,target=/workspace/apps/handball/.next/cache \
+  npm --prefix apps/handball run build
 
 FROM deps AS runtime-deps
-RUN npm prune --omit=dev --omit=optional --no-audit --no-fund \
-  && npm --prefix apps/table-tennis prune --omit=dev --omit=optional --no-audit --no-fund \
-  && npm --prefix apps/handball prune --omit=dev --omit=optional --no-audit --no-fund \
-  && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm prune --omit=dev --omit=optional --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm npm --prefix apps/table-tennis prune --omit=dev --omit=optional --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm npm --prefix apps/handball prune --omit=dev --omit=optional --no-audit --no-fund
 
 FROM base AS runner
 ENV NODE_ENV=production

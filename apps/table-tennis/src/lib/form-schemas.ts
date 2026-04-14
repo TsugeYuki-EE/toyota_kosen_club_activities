@@ -49,6 +49,7 @@ export const attendanceEventSchema = z.object({
   eventType: z.nativeEnum(AttendanceEventType),
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日付を選択してください"),
   eventTime: z.string().regex(/^\d{2}:\d{2}$/, "時刻を選択してください"),
+  eventEndTime: z.string().regex(/^\d{2}:\d{2}$/, "終了時刻を選択してください").optional(),
   matchOpponent: z.string().trim().optional(),
   matchDetail: z.string().trim().optional(),
   note: z.string().trim().optional(),
@@ -58,6 +59,14 @@ export const attendanceEventSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["matchOpponent"],
       message: "試合を選択した場合は対戦相手を入力してください",
+    });
+  }
+
+  if (value.eventEndTime && value.eventEndTime < value.eventTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["eventEndTime"],
+      message: "終了時刻は開始時刻以降を指定してください",
     });
   }
 });

@@ -1,4 +1,4 @@
-﻿# syntax=docker/dockerfile:1
+﻿# syntax=docker/dockerfile:1.7
 
 FROM node:22-alpine AS base
 WORKDIR /app
@@ -8,8 +8,8 @@ RUN apk add --no-cache openssl libc6-compat
 FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm config set fetch-retries 5 \
-	&& npm config set fetch-retry-maxtimeout 120000 \
-	&& npm ci --no-audit --no-fund --omit=optional
+	&& npm config set fetch-retry-maxtimeout 120000
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund --omit=optional
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
@@ -25,20 +25,18 @@ ENV NODE_ENV=production
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=1536
 ENV NODE_OPTIONS=${BUILD_NODE_OPTIONS}
 
-# Clean any previous build artifacts and caches
-RUN rm -rf .next node_modules/.cache
-
-RUN npx prisma generate
-RUN npm run build -- --webpack
+RUN --mount=type=cache,target=/root/.npm npx prisma generate
+RUN --mount=type=cache,target=/root/.npm \
+	--mount=type=cache,target=/app/.next/cache \
+	npm run build -- --webpack
 
 FROM base AS runner
 ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
 RUN npm config set fetch-retries 5 \
-	&& npm config set fetch-retry-maxtimeout 120000 \
-	&& npm ci --omit=dev --omit=optional --ignore-scripts --no-audit --no-fund \
-	&& npm cache clean --force
+	&& npm config set fetch-retry-maxtimeout 120000
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --omit=optional --ignore-scripts --no-audit --no-fund
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static

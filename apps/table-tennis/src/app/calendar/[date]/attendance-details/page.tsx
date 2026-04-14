@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AttendanceStatus } from "@prisma/client";
 import { notFound, redirect } from "next/navigation";
 import { getJstDayRangeFromDateKey } from "@/lib/date-format";
-import { LocalDate, LocalDateTime } from "@/components/local-date-time";
+import { LocalDate, LocalDateTime, LocalDateTimeRange } from "@/components/local-date-time";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
@@ -54,6 +54,13 @@ function statusClassName(status: AttendanceStatus): string {
   }
 
   return `${styles.statusBadge} ${styles.unknown}`;
+}
+
+function removeTrailingSameDateTitleSuffix(title: string, dateKey: string): string {
+  const slashDateKey = dateKey.replace(/-/g, "/");
+  const trailingDatePattern = new RegExp(`\\s*(?:${dateKey}|${slashDateKey})\\s*$`);
+  const normalizedTitle = title.replace(trailingDatePattern, "").trim();
+  return normalizedTitle || title;
 }
 
 export default async function AttendanceDetailsPage({ params }: PageProps) {
@@ -110,8 +117,8 @@ export default async function AttendanceDetailsPage({ params }: PageProps) {
 
           return (
             <article key={event.id} className={styles.card}>
-              <h2>{event.title}</h2>
-              <p className={styles.meta}><LocalDateTime value={event.scheduledAt} /></p>
+              <h2>{removeTrailingSameDateTitleSuffix(event.title, date)}</h2>
+              <p className={styles.meta}><LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} /></p>
               {event.matchDetail || event.note ? (
                 <div className={styles.infoBox}>
                   {event.matchDetail ? <p className={styles.meta}>試合詳細: {event.matchDetail}</p> : null}

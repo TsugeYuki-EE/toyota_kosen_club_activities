@@ -15,6 +15,7 @@ import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-abs
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import { fetchActiveAnnouncement } from "@/lib/dual-db-content";
+import { CalendarPdfDownloadButton } from "./calendar-pdf-download-button";
 import { FloatingMobileTabs } from "./floating-mobile-tabs";
 import styles from "./home-dashboard.module.css";
 
@@ -66,6 +67,23 @@ function toMonthParam(date: Date): string {
 function formatCalendarMonth(date: Date): string {
   const parts = getJstDateParts(date);
   return `${parts.year} ${parts.month}月`;
+}
+
+function formatJstTime(date: Date): string {
+  return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function formatEventTimeRange(startValue: Date, endValue?: Date | null): string {
+  const startText = formatJstTime(startValue);
+  if (!endValue) {
+    return startText;
+  }
+  return `${startText}-${formatJstTime(endValue)}`;
 }
 
 // 月間カレンダーを 6 週分のマスで作るための日付配列です。
@@ -161,6 +179,8 @@ export default async function Home({ searchParams }: HomePageProps) {
   const attendanceStatusByDateMap = new Map<string, { registered: number; pending: number }>();
   const hasSupplementByDateMap = new Map<string, boolean>();
   const eventResponseStatusMap = new Map<string, AttendanceStatus>();
+  const scheduleTextByDateMap = new Map<string, string[]>();
+  const supplementTextByDateMap = new Map<string, string[]>();
 
   for (const record of attendanceRecords) {
     eventResponseStatusMap.set(record.eventId, record.status);
@@ -193,6 +213,19 @@ export default async function Home({ searchParams }: HomePageProps) {
       statusSummary.registered += 1;
     }
     attendanceStatusByDateMap.set(key, statusSummary);
+
+    const scheduleTexts = scheduleTextByDateMap.get(key) || [];
+    scheduleTexts.push(`${label} ${formatEventTimeRange(event.scheduledAt, event.endAt)}`);
+    scheduleTextByDateMap.set(key, scheduleTexts);
+
+    const supplementTexts = supplementTextByDateMap.get(key) || [];
+    if (event.matchDetail) {
+      supplementTexts.push(`試合詳細: ${event.matchDetail}`);
+    }
+    if (event.note) {
+      supplementTexts.push(`補足: ${event.note}`);
+    }
+    supplementTextByDateMap.set(key, supplementTexts);
   }
 
   for (const practice of practiceMenus) {
@@ -200,7 +233,38 @@ export default async function Home({ searchParams }: HomePageProps) {
     const current = scheduleMap.get(key) || new Set<"練習" | "試合">();
     current.add("練習");
     scheduleMap.set(key, current);
+
+    const scheduleTexts = scheduleTextByDateMap.get(key) || [];
+    scheduleTexts.push("練習 (メニュー)");
+    scheduleTextByDateMap.set(key, scheduleTexts);
+
+    if (practice.detail) {
+      const supplementTexts = supplementTextByDateMap.get(key) || [];
+      supplementTexts.push(`練習メニュー補足: ${practice.detail}`);
+      supplementTextByDateMap.set(key, supplementTexts);
+      hasSupplementByDateMap.set(key, true);
+    }
   }
+
+  const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+  const daysInMonth = new Date(Date.UTC(currentMonthParts.year, currentMonthParts.month, 0)).getUTCDate();
+  const calendarPdfRows = Array.from({ length: daysInMonth }, (_, dayIndex) => {
+    const day = dayIndex + 1;
+    const date = createJstDate(currentMonthParts.year, currentMonthParts.month - 1, day);
+    const dateKey = toDateKey(date);
+    const weekdayIndex = getJstWeekday(date);
+    const schedules = scheduleTextByDateMap.get(dateKey) || [];
+    const supplements = [...new Set(supplementTextByDateMap.get(dateKey) || [])];
+    return {
+      dateKey,
+      weekdayLabel: weekdayLabels[weekdayIndex],
+      weekdayIndex,
+      isHoliday: isJapaneseHolidayDateKey(dateKey),
+      hasActivity: schedules.length > 0,
+      schedules,
+      supplements,
+    };
+  });
 
   return (
     <div className={styles.page}>
@@ -377,6 +441,12 @@ export default async function Home({ searchParams }: HomePageProps) {
           <Link href="/feedback" className={styles.feedbackButton}>
             アプリへのフィードバックを送る
           </Link>
+          <CalendarPdfDownloadButton
+            className={styles.feedbackButtonSub}
+            monthLabel={formatCalendarMonth(currentMonth)}
+            monthParam={monthParam}
+            rows={calendarPdfRows}
+          />
         </section>
 
         <FloatingMobileTabs monthQuery={monthQuery} />

@@ -223,6 +223,8 @@
 
 .feedbackSection {
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
 }
 
@@ -242,6 +244,16 @@
 .feedbackButton:hover {
   background: #be1026;
   border-color: #be1026;
+}
+
+.feedbackButtonSub {
+  background: #1d4f6a;
+  border-color: #1d4f6a;
+}
+
+.feedbackButtonSub:hover {
+  background: #163c50;
+  border-color: #163c50;
 }
 
 .goalCard {

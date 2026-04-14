@@ -306,6 +306,11 @@ export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
       </label>
 
       <label>
+        終了時刻 (任意・5分単位)
+        <input type="time" name="eventEndTime" step={300} />
+      </label>
+
+      <label>
         対戦相手 (試合の場合)
         <input type="text" name="matchOpponent" placeholder="例: 豊田北高校" />
       </label>

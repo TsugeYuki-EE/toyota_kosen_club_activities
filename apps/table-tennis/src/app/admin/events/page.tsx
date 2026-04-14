@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AttendanceEventType } from "@prisma/client";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
 import { toDateKey } from "@/lib/date-format";
-import { LocalDateTime } from "@/components/local-date-time";
+import { LocalDateTimeRange } from "@/components/local-date-time";
 import { prisma } from "@/lib/prisma";
 import styles from "./events-management.module.css";
 
@@ -85,7 +85,7 @@ export default async function EventManagePage({ searchParams }: EventManagePageP
                 <tr key={event.id}>
                   <td>{event.eventType === AttendanceEventType.MATCH ? "試合" : "練習"}</td>
                   <td>{event.title}</td>
-                  <td><LocalDateTime value={event.scheduledAt} /></td>
+                  <td><LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} /></td>
                   <td>
                     {event.eventType === AttendanceEventType.MATCH ? (
                       <Link

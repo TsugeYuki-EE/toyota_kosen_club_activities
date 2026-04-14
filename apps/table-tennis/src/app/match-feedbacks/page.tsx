@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
-import { LocalDateTime } from "@/components/local-date-time";
+import { LocalDateTimeRange } from "@/components/local-date-time";
 import { FloatingMobileTabs } from "@/app/floating-mobile-tabs";
 import styles from "@/app/home-dashboard.module.css";
 
@@ -92,7 +92,7 @@ export default async function MatchFeedbacksPage({ searchParams }: PageProps) {
         ) : (
           <section className={styles.card}>
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-              {attendedMatches.map((match: { id: string; title: string; matchOpponent: string | null; scheduledAt: Date }) => {
+              {attendedMatches.map((match: { id: string; title: string; matchOpponent: string | null; scheduledAt: Date; endAt: Date | null }) => {
                 const existingFeedback = feedbackMap.get(match.id) as string | undefined;
                 return (
                   <article
@@ -109,7 +109,7 @@ export default async function MatchFeedbacksPage({ searchParams }: PageProps) {
                         {match.title} vs {match.matchOpponent || "相手未定"}
                       </h3>
                       <p style={{ margin: "0", fontSize: "14px", color: "#666" }}>
-                        <LocalDateTime value={match.scheduledAt} />
+                        <LocalDateTimeRange startValue={match.scheduledAt} endValue={match.endAt} />
                       </p>
                       {existingFeedback && (
                         <p

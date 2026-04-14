@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
-import { LocalDateTime } from "@/components/local-date-time";
+import { LocalDateTime, LocalDateTimeRange } from "@/components/local-date-time";
 import { sortMembersByGradeAscending } from "@/lib/member-sort";
 import { prisma } from "@/lib/prisma";
 import styles from "../../events-management.module.css";
@@ -51,6 +51,7 @@ export default async function AdminEventFeedbacksPage({ params, searchParams }: 
       id: true,
       title: true,
       scheduledAt: true,
+      endAt: true,
       eventType: true,
       matchOpponent: true,
       matchDetail: true,
@@ -109,7 +110,7 @@ export default async function AdminEventFeedbacksPage({ params, searchParams }: 
           {event.title}
           {event.matchOpponent ? ` / vs ${event.matchOpponent}` : ""}
           {" / "}
-          <LocalDateTime value={event.scheduledAt} />
+          <LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} />
         </p>
       </header>
 

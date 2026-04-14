@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
-import { LocalDateTime } from "@/components/local-date-time";
+import { LocalDateTimeRange } from "@/components/local-date-time";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/admin/member-detail-dashboard.module.css";
 
@@ -49,6 +49,7 @@ export default async function AdminMemberMatchFeedbacksPage({ params }: PageProp
           id: true,
           title: true,
           scheduledAt: true,
+          endAt: true,
           matchOpponent: true,
         },
       },
@@ -77,11 +78,11 @@ export default async function AdminMemberMatchFeedbacksPage({ params }: PageProp
           <p className={styles.empty}>試合振り返りはまだ記録されていません。</p>
         ) : (
           <ul className={styles.tableList}>
-            {feedbacks.map((feedback: { id: string; feedback: string; event: { title: string; scheduledAt: Date; matchOpponent: string | null } }) => (
+            {feedbacks.map((feedback: { id: string; feedback: string; event: { title: string; scheduledAt: Date; endAt: Date | null; matchOpponent: string | null } }) => (
               <li key={feedback.id}>
                 <strong>{feedback.event.title}</strong>
                 {" / "}
-                <LocalDateTime value={feedback.event.scheduledAt} />
+                <LocalDateTimeRange startValue={feedback.event.scheduledAt} endValue={feedback.event.endAt} />
                 {feedback.event.matchOpponent ? ` / vs ${feedback.event.matchOpponent}` : ""}
                 <p style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{feedback.feedback}</p>
               </li>

@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { canAccessAdminByMember } from "@/lib/admin-access";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
 import { getJstDayRangeFromDateKey } from "@/lib/date-format";
-import { LocalDate, LocalDateTime } from "@/components/local-date-time";
+import { LocalDate, LocalDateTime, LocalDateTimeRange } from "@/components/local-date-time";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/member-page-shared.module.css";
@@ -39,6 +39,13 @@ function statusLabel(status: AttendanceStatus): string {
   }
 
   return "未回答";
+}
+
+function removeTrailingSameDateTitleSuffix(title: string, dateKey: string): string {
+  const slashDateKey = dateKey.replace(/-/g, "/");
+  const trailingDatePattern = new RegExp(`\\s*(?:${dateKey}|${slashDateKey})\\s*$`);
+  const normalizedTitle = title.replace(trailingDatePattern, "").trim();
+  return normalizedTitle || title;
 }
 
 export default async function CalendarDatePage({ params, searchParams }: PageProps) {
@@ -123,7 +130,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
           <h2>当日の予定</h2>
           <ul className={styles.list}>
             {events.map((event) => (
-              <li key={event.id}>出席イベント: {event.title} / <LocalDateTime value={event.scheduledAt} /></li>
+              <li key={event.id}>出席イベント: {removeTrailingSameDateTitleSuffix(event.title, date)} / <LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} /></li>
             ))}
             {matches.map((match) => (
               <li key={match.id}>試合: vs {match.opponent} / <LocalDateTime value={match.matchDate} /></li>
@@ -149,8 +156,8 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
 
           return (
             <article key={event.id} className={styles.card}>
-              <h2>{event.title}</h2>
-              <p className={styles.meta}><LocalDateTime value={event.scheduledAt} /></p>
+              <h2>{removeTrailingSameDateTitleSuffix(event.title, date)}</h2>
+              <p className={styles.meta}><LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} /></p>
               {event.matchDetail || event.note ? (
                 <div className={styles.infoBox}>
                   <p className={styles.infoTitle}>提出前に確認</p>

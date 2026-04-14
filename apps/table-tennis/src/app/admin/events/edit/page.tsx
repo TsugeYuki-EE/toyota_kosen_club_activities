@@ -213,6 +213,10 @@ export default async function EventEditPage({ searchParams }: EventEditPageProps
                   <input type="time" name="eventTime" step={300} defaultValue={toTimeValue(event.scheduledAt)} required />
                 </label>
                 <label>
+                  終了時刻 (任意・5分単位)
+                  <input type="time" name="eventEndTime" step={300} defaultValue={event.endAt ? toTimeValue(event.endAt) : ""} />
+                </label>
+                <label>
                   対戦相手 (試合の場合)
                   <input type="text" name="matchOpponent" defaultValue={event.matchOpponent || ""} />
                 </label>

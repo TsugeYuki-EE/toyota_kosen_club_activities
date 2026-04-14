@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
-import { LocalDateTime } from "@/components/local-date-time";
+import { LocalDateTime, LocalDateTimeRange } from "@/components/local-date-time";
 import styles from "@/app/home-dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +33,7 @@ export default async function MatchFeedbackDetailPage({ params, searchParams }: 
       id: true,
       title: true,
       scheduledAt: true,
+      endAt: true,
       matchOpponent: true,
       matchDetail: true,
       note: true,
@@ -62,7 +63,7 @@ export default async function MatchFeedbackDetailPage({ params, searchParams }: 
         <section className={styles.card}>
           <h1>{event.title}</h1>
           <p>vs {event.matchOpponent || "相手未定"}</p>
-          <p className={styles.muted}><LocalDateTime value={event.scheduledAt} /></p>
+          <p className={styles.muted}><LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} /></p>
           {event.matchDetail ? <p className={styles.muted}>試合詳細: {event.matchDetail}</p> : null}
           {event.note ? <p className={styles.muted}>補足: {event.note}</p> : null}
         </section>
