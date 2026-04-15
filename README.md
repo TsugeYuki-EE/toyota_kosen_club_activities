@@ -4,8 +4,8 @@
 
 ## 構成
 
-- `apps/handball`: 既存ハンドボールアプリ
-- `apps/table-tennis`: 既存卓球アプリ
+- `apps/handball`: ハンドボールアプリ
+- `apps/table-tennis`: 卓球アプリ
 - `gateway/server.cjs`: 部活選択画面と内部プロキシ
 - `docker-compose.yml`: 統合起動設定
 
