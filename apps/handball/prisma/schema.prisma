@@ -56,6 +56,7 @@ model Member {
   weights             WeightRecord[]
   tokens              InputToken[]
   createdPracticeMenus PracticeMenu[]    @relation("CreatedPracticeMenus")
+  createdTimerPresets TimerPreset[]       @relation("CreatedTimerPresets")
   playerScores        PlayerMatchScore[]
   playerMatchPeriodStats PlayerMatchPeriodStat[]
   releaseNotes        ReleaseNote[]      @relation("ReleasesCreatedBy")
@@ -130,6 +131,22 @@ model PracticeMenu {
   createdByMemberId String?
   createdAt        DateTime @default(now())
   createdBy        Member?  @relation("CreatedPracticeMenus", fields: [createdByMemberId], references: [id], onDelete: SetNull)
+}
+
+/// タイマーのプリセットです。標準プリセットとユーザー作成分を保存します。
+model TimerPreset {
+  id                 String   @id @default(cuid())
+  name               String
+  durationSeconds    Int
+  setCount           Int      @default(1)
+  description        String?
+  isSystemPreset     Boolean  @default(false)
+  createdByMemberId   String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  createdBy          Member?  @relation("CreatedTimerPresets", fields: [createdByMemberId], references: [id], onDelete: SetNull)
+
+  @@index([isSystemPreset, createdByMemberId])
 }
 
 /// 部員ごとの試合得点です。

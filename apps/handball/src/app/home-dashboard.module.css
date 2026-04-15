@@ -543,7 +543,8 @@
   transition: bottom 0.18s ease;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 8px;
   width: min(760px, calc(100vw - 24px));
   padding: 8px;
@@ -560,8 +561,10 @@
 
 .mobileTab {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   border-radius: 10px;
   border: 1px solid #d7e4ed;
   background: #f5fbff;
@@ -570,6 +573,415 @@
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
+}
+
+.timerTabActive {
+  background: linear-gradient(135deg, #193042 0%, #28516f 100%);
+  color: #ffffff;
+  border-color: #193042;
+}
+
+.mobileTabLabel {
+  line-height: 1.1;
+}
+
+.timerTabValue {
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.1;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.timerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: end center;
+  padding: 16px;
+  background: rgba(20, 37, 56, 0.48);
+  backdrop-filter: blur(6px);
+}
+
+.timerCard {
+  width: min(720px, 100%);
+  max-height: min(84vh, 820px);
+  overflow: auto;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #d7e4ed;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  box-shadow: 0 24px 60px rgba(16, 28, 39, 0.24);
+}
+
+.timerCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timerEyebrow {
+  margin: 0 0 6px;
+  color: #2f7da8;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.timerLead {
+  margin: 6px 0 0;
+  color: #4a3f42;
+  line-height: 1.6;
+}
+
+.timerCloseButton,
+.primaryButton,
+.secondaryButton {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #173246;
+  font: inherit;
+  font-weight: 700;
+}
+
+.timerCloseButton,
+.secondaryButton {
+  background: #ffffff;
+  color: #173246;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #173246 0%, #2f7da8 100%);
+  color: #ffffff;
+  border-color: #173246;
+}
+
+.timerActivePanel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #eff8ff;
+  border: 1px solid #cfe0ec;
+}
+
+.timerSetLabel {
+  margin: 6px 0 0;
+  color: #4f6c7f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.timerActiveLabel {
+  margin: 0 0 4px;
+  color: #2f7da8;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.timerActivePanel h3,
+.timerSection h3 {
+  margin: 0;
+  color: #193042;
+  font-size: 18px;
+}
+
+.timerCountdown {
+  color: #173246;
+  font-size: clamp(34px, 7vw, 56px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.timerSetProgressText {
+  color: #4f6c7f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.timerProgressTrack {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #d8e6ef;
+}
+
+.timerProgressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2f7da8 0%, #68b7df 100%);
+}
+
+.timerCardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.timerSection {
+  display: grid;
+  gap: 12px;
+}
+
+.timerPresetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.timerPresetCard {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #d7e4ed;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timerPresetCard:hover {
+  border-color: #2f7da8;
+  box-shadow: 0 8px 20px rgba(47, 125, 168, 0.12);
+}
+
+.timerPresetButton {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 108px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #193042;
+  text-align: left;
+  font: inherit;
+  font-weight: 700;
+}
+
+.timerPresetBadge {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e5f2fa;
+  color: #2f7da8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.timerPresetLabel {
+  font-size: 16px;
+}
+
+.timerPresetDuration {
+  color: #2f7da8;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.timerPresetDescription {
+  color: #587184;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.timerPresetActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.timerPresetDeleteButton {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #f1b4b4;
+  background: #fff4f4;
+  color: #b42318;
+}
+
+.timerPresetDeleteButton:hover:not(:disabled) {
+  border-color: #e57373;
+  box-shadow: 0 8px 20px rgba(180, 35, 24, 0.12);
+}
+
+.timerPresetDeleteButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.timerCreateSection {
+  display: grid;
+  gap: 12px;
+}
+
+.timerCreateForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.timerCreateDescriptionField {
+  grid-column: 1 / -1;
+}
+
+.timerCreateActions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.timerCustomForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.timerField {
+  display: grid;
+  gap: 6px;
+  color: #35556a;
+  font-size: 14px;
+}
+
+.timerField input {
+  font: inherit;
+  border: 1px solid #bccdd8;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.timerStatus {
+  margin: 0;
+  color: #2f7da8;
+  font-weight: 700;
+}
+
+.timerCompletionFlash {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border: 0;
+  padding: 16px;
+  font: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+  background: rgba(185, 28, 28, 0.78);
+  animation: timerCompletionFlash 0.8s steps(1, end) infinite;
+}
+
+.timerCompletionFlashInner {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(127, 29, 29, 0.94);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 16px 36px rgba(127, 29, 29, 0.34);
+}
+
+.timerIntervalFlash {
+  position: fixed;
+  inset: 0;
+  z-index: 89;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: rgba(34, 197, 94, 0.28);
+  animation: timerIntervalFlash 0.8s steps(1, end) 1;
+}
+
+.timerIntervalFlashInner {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(21, 128, 61, 0.95);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 16px 36px rgba(21, 128, 61, 0.28);
+}
+
+@keyframes timerCompletionFlash {
+  0% {
+    opacity: 0.92;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  30% {
+    opacity: 0.55;
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 0.5;
+  }
+
+  75% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.62;
+  }
+}
+
+@keyframes timerIntervalFlash {
+  0% {
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  28% {
+    opacity: 0.22;
+  }
+
+  44% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 0.25;
+  }
+
+  76% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 640px) {
@@ -603,6 +1015,26 @@
     right: 12px;
     transform: none;
     width: auto;
+  }
+
+  .timerOverlay {
+    place-items: end stretch;
+    padding: 12px;
+  }
+
+  .timerCard {
+    width: 100%;
+    max-height: 88vh;
+    padding: 16px;
+    border-radius: 18px 18px 14px 14px;
+  }
+
+  .timerCardHeader {
+    flex-direction: column;
+  }
+
+  .timerCustomForm {
+    grid-template-columns: 1fr;
   }
 
   .calendarHeader {
