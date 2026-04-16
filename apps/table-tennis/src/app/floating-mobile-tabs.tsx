@@ -575,7 +575,6 @@ export function FloatingMobileTabs({ monthQuery }: FloatingMobileTabsProps) {
       >
         <Link href="/table-tennis-notes" className={styles.mobileTab}>卓球ノート</Link>
         <Link href="/match-feedbacks" className={styles.mobileTab}>試合振り返り</Link>
-        <Link href={`/self/profile${monthQuery}`} className={styles.mobileTab}>プロフィール</Link>
         <button
           type="button"
           className={`${styles.mobileTab} ${timerState ? styles.timerTabActive : ""}`.trim()}
@@ -599,6 +598,7 @@ export function FloatingMobileTabs({ monthQuery }: FloatingMobileTabsProps) {
             )}
           </span>
         </button>
+        <Link href={`/self/profile${monthQuery}`} className={styles.mobileTab}>プロフィール</Link>
       </nav>
 
       {completionFlashMessage ? (

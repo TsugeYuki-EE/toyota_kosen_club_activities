@@ -1,19 +1,10 @@
 import Link from "next/link";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
+import { WEEKDAY_DEFAULT_TIME_ROWS } from "@/lib/event-default-times";
 import { nowInJst, toDateTimeLocalValue } from "@/lib/date-format";
 import styles from "../../events-management.module.css";
 
 export const dynamic = "force-dynamic";
-
-const weekdayRows = [
-  { key: "sun", label: "日", startTime: "09:15", endTime: "13:00" },
-  { key: "mon", label: "月", startTime: "15:15", endTime: "18:00" },
-  { key: "tue", label: "火", startTime: "16:30", endTime: "18:30" },
-  { key: "wed", label: "水", startTime: "15:55", endTime: "18:30" },
-  { key: "thu", label: "木", startTime: "16:30", endTime: "18:30" },
-  { key: "fri", label: "金", startTime: "15:15", endTime: "18:00" },
-  { key: "sat", label: "土", startTime: "09:15", endTime: "13:00" },
-] as const;
 
 export default async function BulkDefaultEventCreatePage() {
   const adminMember = await getAuthorizedAdminMember();
@@ -77,7 +68,7 @@ export default async function BulkDefaultEventCreatePage() {
                 </tr>
               </thead>
               <tbody>
-                {weekdayRows.map((row) => (
+                {WEEKDAY_DEFAULT_TIME_ROWS.map((row) => (
                   <tr key={row.key}>
                     <td>{row.label}</td>
                     <td>

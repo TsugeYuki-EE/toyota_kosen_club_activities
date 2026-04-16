@@ -2,11 +2,26 @@ import Link from "next/link";
 import { AttendanceEventType } from "@prisma/client";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
 import { nowInJst, toDateTimeLocalValue } from "@/lib/date-format";
+import { getDefaultEventTimesForDateKey } from "@/lib/event-default-times";
 import styles from "../events-management.module.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function SingleEventCreatePage() {
+type SingleEventCreatePageProps = {
+  searchParams: Promise<{
+    date?: string;
+  }>;
+};
+
+function normalizeDateParam(value?: string): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+  return value;
+}
+
+export default async function SingleEventCreatePage({ searchParams }: SingleEventCreatePageProps) {
+  const params = await searchParams;
   const adminMember = await getAuthorizedAdminMember();
 
   if (!adminMember) {
@@ -24,7 +39,9 @@ export default async function SingleEventCreatePage() {
   }
 
   const now = nowInJst();
-  const defaultDate = toDateTimeLocalValue(now).slice(0, 10);
+  const fallbackDate = toDateTimeLocalValue(now).slice(0, 10);
+  const defaultDate = normalizeDateParam(params.date) || fallbackDate;
+  const defaultTimes = getDefaultEventTimesForDateKey(defaultDate);
 
   return (
     <main className={styles.page}>
@@ -58,11 +75,11 @@ export default async function SingleEventCreatePage() {
           </label>
           <label>
             時刻 (5分単位)
-            <input type="time" name="eventTime" step={300} defaultValue="19:00" required />
+            <input type="time" name="eventTime" step={300} defaultValue={defaultTimes.startTime} required />
           </label>
           <label>
             終了時刻 (任意・5分単位)
-            <input type="time" name="eventEndTime" step={300} />
+            <input type="time" name="eventEndTime" step={300} defaultValue={defaultTimes.endTime} />
           </label>
           <label>
             対戦相手 (試合の場合)

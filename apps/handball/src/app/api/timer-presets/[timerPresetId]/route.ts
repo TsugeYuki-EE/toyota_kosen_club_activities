@@ -15,7 +15,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   const { timerPresetId } = await params;
   const timerPreset = await prisma.timerPreset.findUnique({
     where: { id: timerPresetId },
-    select: { id: true, isSystemPreset: true, createdByMemberId: true },
+    select: { id: true, isSystemPreset: true },
   });
 
   if (!timerPreset) {
@@ -23,10 +23,6 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   }
 
   if (timerPreset.isSystemPreset) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  }
-
-  if (timerPreset.createdByMemberId !== member.id) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 

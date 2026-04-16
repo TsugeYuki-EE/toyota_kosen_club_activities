@@ -110,7 +110,6 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
       orderBy: { practiceDate: "asc" },
     }),
   ]);
-
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -120,6 +119,9 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
 
       <nav className={styles.nav}>
         <Link href="/" className={styles.secondaryLink}>カレンダーへ戻る</Link>
+        {canViewMatchFeedbackList ? (
+          <Link href={`/admin/events/single?date=${date}`} className={styles.button}>予定を作成</Link>
+        ) : null}
       </nav>
 
       {query.ok ? <p className={styles.message}>保存しました: {query.ok}</p> : null}
@@ -138,9 +140,6 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
             {practiceMenus.map((practice) => (
               <li key={practice.id}>練習: {practice.title} / <LocalDateTime value={practice.practiceDate} /></li>
             ))}
-            {events.length === 0 && matches.length === 0 && practiceMenus.length === 0 ? (
-              <li className={styles.empty}>この日の予定はありません。</li>
-            ) : null}
           </ul>
         </article>
       </section>

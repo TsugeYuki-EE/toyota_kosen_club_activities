@@ -29,7 +29,7 @@ function mapTimerPreset(timerPreset: {
   description: string | null;
   isSystemPreset: boolean;
   createdByMemberId: string | null;
-}, currentMemberId: string): TimerPresetResponse {
+}): TimerPresetResponse {
   return {
     id: timerPreset.id,
     label: timerPreset.name,
@@ -38,7 +38,7 @@ function mapTimerPreset(timerPreset: {
     description: timerPreset.description || "",
     isSystemPreset: timerPreset.isSystemPreset,
     createdByMemberId: timerPreset.createdByMemberId,
-    canDelete: !timerPreset.isSystemPreset && timerPreset.createdByMemberId === currentMemberId,
+    canDelete: !timerPreset.isSystemPreset,
   };
 }
 
@@ -55,7 +55,7 @@ export async function GET() {
     ],
   });
 
-  return NextResponse.json({ timerPresets: timerPresets.map((timerPreset) => mapTimerPreset(timerPreset, member.id)) });
+  return NextResponse.json({ timerPresets: timerPresets.map(mapTimerPreset) });
 }
 
 export async function POST(request: NextRequest) {
@@ -87,5 +87,5 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({ timerPreset: mapTimerPreset(createdTimerPreset, member.id) }, { status: 201 });
+  return NextResponse.json({ timerPreset: mapTimerPreset(createdTimerPreset) }, { status: 201 });
 }
