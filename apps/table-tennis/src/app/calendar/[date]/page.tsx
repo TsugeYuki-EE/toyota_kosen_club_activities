@@ -8,6 +8,7 @@ import { LocalDate, LocalDateTime, LocalDateTimeRange } from "@/components/local
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/member-page-shared.module.css";
+import { EventDeleteButton } from "./event-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,8 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
 
   await autoMarkPreviousDayUnansweredAsAbsent(member.id);
 
-  const canViewMatchFeedbackList = canAccessAdminByMember(member);
+  const canManageEvents = canAccessAdminByMember(member);
+  const redirectTo = isHomeCalendarMode ? `/calendar/${date}?from=home` : `/calendar/${date}`;
 
   const selectedDate = dateFromKey(date);
   const { startUtc: dayStart, endUtc: dayEnd } = getJstDayRangeFromDateKey(date);
@@ -119,7 +121,10 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
 
       <nav className={styles.nav}>
         <Link href="/" className={styles.secondaryLink}>カレンダーへ戻る</Link>
-        {canViewMatchFeedbackList ? (
+        {canManageEvents ? (
+          <Link href={`/admin/events/edit?month=${date.slice(0, 7)}&date=${date}`} className={styles.secondaryLink}>予定編集</Link>
+        ) : null}
+        {canManageEvents ? (
           <Link href={`/admin/events/single?date=${date}`} className={styles.button}>予定を作成</Link>
         ) : null}
       </nav>
@@ -209,7 +214,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
                 出欠詳細情報を見る
               </Link>
 
-              {canViewMatchFeedbackList && event.eventType === "MATCH" ? (
+              {canManageEvents && event.eventType === "MATCH" ? (
                 <Link href={`/admin/events/${event.id}/feedbacks?returnTo=${encodeURIComponent(`/calendar/${date}?from=home`)}`} className={styles.secondaryLink}>
                   試合振り返り一覧を見る
                 </Link>
@@ -223,6 +228,32 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
         })}
         {events.length === 0 ? <p className={styles.empty}>この日の出席イベントはありません。</p> : null}
       </section>
+
+      {canManageEvents ? (
+        <section className={styles.card}>
+          <h2>予定の削除</h2>
+          <p className={styles.warningText}>警告: 削除した予定は元に戻せません。実行前に内容を確認してください。</p>
+          {events.length === 0 ? (
+            <p className={styles.empty}>削除できる出席イベントはありません。</p>
+          ) : (
+            <div className={styles.deleteList}>
+              {events.map((event) => (
+                <div key={`delete-${event.id}`} className={styles.deleteItem}>
+                  <div className={styles.deleteItemMeta}>
+                    <p>{removeTrailingSameDateTitleSuffix(event.title, date)}</p>
+                    <p className={styles.meta}><LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} /></p>
+                  </div>
+                  <EventDeleteButton
+                    eventId={event.id}
+                    eventLabel={removeTrailingSameDateTitleSuffix(event.title, date)}
+                    redirectTo={redirectTo}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
     </main>
   );
 }

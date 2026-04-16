@@ -276,6 +276,56 @@
   color: #6a585d;
 }
 
+.warningText {
+  border: 1px solid #e8b5b5;
+  background: #fff3f3;
+  color: #8f1d1d;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.deleteList {
+  display: grid;
+  gap: 10px;
+}
+
+.deleteItem {
+  border: 1px solid #e8d4d8;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.deleteItemMeta {
+  display: grid;
+  gap: 4px;
+}
+
+.inlineForm {
+  margin: 0;
+}
+
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #c62b2b;
+  background: #d73939;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+}
+
+.dangerButton:disabled {
+  opacity: 0.7;
+}
+
 .memberTableWrap {
   border: 1px solid #dbe5ec;
   border-radius: 10px;
@@ -337,5 +387,9 @@
   .dayCell {
     min-height: 104px;
     padding: 8px;
+  }
+
+  .deleteItem {
+    display: grid;
   }
 }
