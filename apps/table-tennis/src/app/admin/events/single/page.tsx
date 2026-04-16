@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { AttendanceEventType } from "@prisma/client";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
 import { nowInJst, toDateTimeLocalValue } from "@/lib/date-format";
 import { getDefaultEventTimesForDateKey } from "@/lib/event-default-times";
 import styles from "../events-management.module.css";
+import { SingleEventCreateForm } from "./single-event-create-form";
 
 export const dynamic = "force-dynamic";
 
@@ -60,41 +60,11 @@ export default async function SingleEventCreatePage({ searchParams }: SingleEven
 
       <section className={styles.card}>
         <h2>入力フォーム</h2>
-        <form action="/api/events" method="post" className={styles.form}>
-          <input type="hidden" name="redirectTo" value="/admin/events/single" />
-          <label>
-            種別
-            <select name="eventType" defaultValue={AttendanceEventType.PRACTICE}>
-              <option value={AttendanceEventType.PRACTICE}>練習</option>
-              <option value={AttendanceEventType.MATCH}>試合</option>
-            </select>
-          </label>
-          <label>
-            日付
-            <input type="date" name="eventDate" defaultValue={defaultDate} required />
-          </label>
-          <label>
-            時刻 (5分単位)
-            <input type="time" name="eventTime" step={300} defaultValue={defaultTimes.startTime} required />
-          </label>
-          <label>
-            終了時刻 (任意・5分単位)
-            <input type="time" name="eventEndTime" step={300} defaultValue={defaultTimes.endTime} />
-          </label>
-          <label>
-            対戦相手 (試合の場合)
-            <input type="text" name="matchOpponent" placeholder="例: 豊田北高校" />
-          </label>
-          <label>
-            試合詳細 (試合の場合)
-            <textarea name="matchDetail" rows={2} placeholder="例: 会場、集合時刻、ユニフォーム情報" />
-          </label>
-          <label>
-            補足
-            <textarea name="note" rows={2} />
-          </label>
-          <button type="submit">単体予定を作成</button>
-        </form>
+        <SingleEventCreateForm
+          defaultDate={defaultDate}
+          defaultStartTime={defaultTimes.startTime}
+          defaultEndTime={defaultTimes.endTime}
+        />
       </section>
     </main>
   );
