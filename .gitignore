@@ -4,6 +4,9 @@ node_modules/
 
 .env
 .env.*
+!.env.pi.example
+!.env.example
+.tmp-prebuilt-deploy/
 apps/handball/.env
 apps/table-tennis/.env
 

@@ -236,6 +236,18 @@ PUBLIC_BASE_URL=https://toyotakosenclubnotes.cc
 
 ## 5. アプリを起動
 
+高速に再デプロイしたい場合は、PC 側からこのスクリプトを使うのがおすすめです。既定では stream 方式で送るので、そのまま動きます。
+
+```bash
+python .\scripts\deploy_prebuilt_image_to_pi.py --pi user@192.168.1.50 --remote-dir /opt/toyota_kosen_club_activities
+```
+
+- 既定では SSH 経由の stream 方式で送る
+- ビルドキャッシュはローカルに残るので、再ビルドは速くなる
+- さらに転送を削りたい上級者向けに `--transfer-mode registry` も使えるが、Docker の registry 信頼設定が必要
+
+Pi 上で手動起動する場合は、従来どおり以下で問題ありません。
+
 ```bash
 cd /opt/toyota_kosen_club_activities
 docker compose up -d --build
