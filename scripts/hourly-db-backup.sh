@@ -17,7 +17,7 @@ fi
 HANDBALL_DIR="$BACKUP_ROOT/handball"
 TABLE_TENNIS_DIR="$BACKUP_ROOT/table-tennis"
 RETENTION_MINUTES=4320
-MAX_FILES=72
+MAX_FILES=6
 
 mkdir -p "$HANDBALL_DIR" "$TABLE_TENNIS_DIR"
 
@@ -61,17 +61,48 @@ backup_one() {
   # 3日より古いバックアップを削除
   find "$output_dir" -type f -name "$label-*.dump" -mmin +"$RETENTION_MINUTES" -delete
 
-  # 念のため、最新72本だけ残す（1時間1本×3日）
+  # 念のため、最新6本だけ残す（0時・12時の1日2本×3日）
   file_list="$(ls -1t "$output_dir"/$label-*.dump 2>/dev/null || true)"
   if [ -n "$file_list" ]; then
-    echo "$file_list" | awk 'NR>72 {print}' | xargs -r rm -f
+    echo "$file_list" | awk -v max_files="$MAX_FILES" 'NR>max_files {print}' | xargs -r rm -f
   fi
 
   echo "[$(date -Iseconds)] backup done: $db_name"
 }
 
+to_int() {
+  value="${1#0}"
+  if [ -z "$value" ]; then
+    value=0
+  fi
+  printf '%s' "$value"
+}
+
+sleep_until_next_run() {
+  hour="$(to_int "$(date +%H)")"
+  minute="$(to_int "$(date +%M)")"
+  second="$(to_int "$(date +%S)")"
+
+  if [ "$hour" -eq 0 ] || [ "$hour" -eq 12 ]; then
+    if [ "$minute" -eq 0 ] && [ "$second" -eq 0 ]; then
+      return
+    fi
+  fi
+
+  if [ "$hour" -lt 12 ]; then
+    sleep_seconds=$(( (12 - hour) * 3600 - minute * 60 - second ))
+  else
+    sleep_seconds=$(( (24 - hour) * 3600 - minute * 60 - second ))
+  fi
+
+  echo "[$(date -Iseconds)] waiting ${sleep_seconds}s until next backup window"
+  sleep "$sleep_seconds"
+}
+
+sleep_until_next_run
+
 while true; do
   backup_one "handball" "handball_notes" "$HANDBALL_DIR"
   backup_one "table-tennis" "table_tennis_notes" "$TABLE_TENNIS_DIR"
-  sleep 3600
+  sleep_until_next_run
 done

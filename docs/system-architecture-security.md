@@ -33,8 +33,7 @@ Express 入口
       postgres[(PostgreSQL
 handball_notes
 table_tennis_notes)]
-      backup[db-backup
-1時間ごと / 最大3日]
+      backup[db-backup<br/>0時・12時 / 最大3日]
     end
   end
 

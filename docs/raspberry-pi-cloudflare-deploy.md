@@ -439,12 +439,12 @@ docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tu
 
 ## バックアップ
 
-本プロジェクトでは DB バックアップを1時間ごとに自動実行:
+本プロジェクトでは DB バックアップを0時と12時に自動実行:
 
 - backups/handball
 - backups/table-tennis
 
-3日分（最大72世代）を保持します。
+3日分（最大6世代）を保持します。
 
 ### バックアップが動いているか確認
 
