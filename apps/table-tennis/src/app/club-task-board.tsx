@@ -29,7 +29,7 @@ export function ClubTaskBoard({ tasks, redirectTo }: ClubTaskBoardProps) {
       <div className={styles.taskHeader}>
         <div>
           <h2>部活タスク</h2>
-          <p>管理者権限のあるプレイヤー向けの共有タスクです。追加、完了更新、締め切り変更、削除ができます。</p>
+          <p>管理者権限のあるプレイヤー向けの共有タスクです。</p>
         </div>
       </div>
 
@@ -63,18 +63,18 @@ export function ClubTaskBoard({ tasks, redirectTo }: ClubTaskBoardProps) {
                 const deadlineKey = toDateKey(task.deadlineOn);
                 return (
                   <tr key={task.id} className={task.isCompleted ? styles.taskRowCompleted : ""}>
-                    <td>
+                    <td data-label="状態">
                       <span className={`${styles.taskStatusPill} ${task.isCompleted ? styles.taskStatusDone : styles.taskStatusTodo}`}>
                         {formatTaskStatus(task)}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="タスク">
                       <div className={styles.taskTitle}>{task.title}</div>
                       <div className={styles.taskMeta}>
                         {task.createdBy?.nickname ? `作成者: ${task.createdBy.nickname}` : "作成者: 不明"}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="締め切り">
                       <form action="/api/club-tasks" method="post" className={styles.taskInlineForm}>
                         <input type="hidden" name="intent" value="update-deadline" />
                         <input type="hidden" name="taskId" value={task.id} />
@@ -85,7 +85,7 @@ export function ClubTaskBoard({ tasks, redirectTo }: ClubTaskBoardProps) {
                         </div>
                       </form>
                     </td>
-                    <td>
+                    <td data-label="操作">
                       <div className={styles.taskActions}>
                         <form action="/api/club-tasks" method="post" className={styles.taskInlineForm}>
                           <input type="hidden" name="intent" value="toggle-complete" />

@@ -1312,6 +1312,70 @@
     padding: 20px 14px 110px;
   }
 
+  .taskCard {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .taskHeader h2 {
+    font-size: 20px;
+  }
+
+  .taskTableWrap {
+    overflow: visible;
+  }
+
+  .taskTable thead {
+    display: none;
+  }
+
+  .taskTable,
+  .taskTable tbody,
+  .taskTable tr {
+    display: block;
+    width: 100%;
+  }
+
+  .taskTable tr {
+    border: 1px solid #eadfdd;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #ffffff;
+  }
+
+  .taskTable td {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    border-top: none;
+    padding: 8px 0;
+  }
+
+  .taskTable td::before {
+    content: attr(data-label);
+    color: #6a585d;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .taskActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .taskInlineForm,
+  .taskSecondaryButton,
+  .taskDangerButton {
+    width: 100%;
+  }
+
+  .taskDeadlineForm {
+    grid-template-columns: 1fr;
+  }
+
   .ctas {
     display: grid;
   }
