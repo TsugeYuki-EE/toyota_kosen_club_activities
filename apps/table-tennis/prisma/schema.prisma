@@ -52,6 +52,7 @@ model Member {
   monthlyGoal         String?
   canAccessAdmin      Boolean            @default(false)
   role                Role               @default(PLAYER)
+  attendanceRateStartAt DateTime         @default(now())
   createdAt           DateTime           @default(now())
   attendances         AttendanceRecord[]
   weights             WeightRecord[]

@@ -15,6 +15,7 @@ export type SessionMember = {
   monthlyGoal: string | null;
   canAccessAdmin: boolean;
   role: "PLAYER" | "MANAGER" | "COACH" | "ADMIN";
+  attendanceRateStartAt: Date;
   createdAt: Date;
 };
 
@@ -38,6 +39,7 @@ export async function getSessionMember() {
       monthlyGoal: true,
       canAccessAdmin: true,
       role: true,
+        attendanceRateStartAt: true,
       createdAt: true,
     },
   });

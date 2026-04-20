@@ -15,7 +15,14 @@ type ManagerMemberSource = {
   nickname: string | null;
   grade: string | null;
   role: MemberRoleValue;
-  attendances: { status: "ATTEND" | "LATE" | "ABSENT" | "UNKNOWN" }[];
+  attendanceRateStartAt: Date;
+  attendances: {
+    status: "ATTEND" | "LATE" | "ABSENT" | "UNKNOWN";
+    event: {
+      eventType: "PRACTICE" | "MATCH";
+      scheduledAt: Date;
+    };
+  }[];
   playerScores: { goals: number; shotAttempts: number }[];
 };
 
@@ -43,9 +50,16 @@ export default async function AdminManagerPage() {
       nickname: true,
       grade: true,
       role: true,
+      attendanceRateStartAt: true,
       attendances: {
         select: {
           status: true,
+          event: {
+            select: {
+              eventType: true,
+              scheduledAt: true,
+            },
+          },
         },
       },
       playerScores: {
@@ -68,10 +82,12 @@ export default async function AdminManagerPage() {
       ? "ADMIN"
       : (member.role as MemberRoleValue);
 
-    const validAttendances = member.attendances.filter((record: { status: "ATTEND" | "LATE" | "ABSENT" | "UNKNOWN" }) =>
-      record.status === "ATTEND" || record.status === "LATE" || record.status === "ABSENT"
+    const validAttendances = member.attendances.filter((record) =>
+      record.event.eventType === "PRACTICE" &&
+      record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime() &&
+      (record.status === "ATTEND" || record.status === "LATE" || record.status === "ABSENT")
     );
-    const attendCount = validAttendances.filter((record) => record.status === "ATTEND").length;
+    const attendCount = validAttendances.filter((record) => record.status === "ATTEND" || record.status === "LATE").length;
     const attendanceRate =
       validAttendances.length === 0 ? null : (attendCount / validAttendances.length) * 100;
 

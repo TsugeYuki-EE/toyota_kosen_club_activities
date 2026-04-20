@@ -121,6 +121,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
 
         <AdminMemberTable members={members} canManageRoles={canManageRoles} />
+        <div className={styles.inlineActions}>
+          <form action="/api/members" method="post" className={styles.inlineForm}>
+            <input type="hidden" name="intent" value="reset-attendance-rate" />
+            <button type="submit" className={styles.dangerButton}>
+              出席率リセット（本日から再計算）
+            </button>
+          </form>
+        </div>
       </section>
 
       <section className={styles.card}>
