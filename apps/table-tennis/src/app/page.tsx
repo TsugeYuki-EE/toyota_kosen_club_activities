@@ -13,6 +13,7 @@ import {
 import { isJapaneseHolidayDateKey } from "@/lib/japanese-holiday";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
 import { canAccessAdminByMember } from "@/lib/admin-access";
+import { cleanupCompletedExpiredClubTasks } from "@/lib/club-task";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import { fetchActiveAnnouncement } from "@/lib/dual-db-content";
@@ -180,6 +181,7 @@ export default async function Home({ searchParams }: HomePageProps) {
 
   if (canManageClubTasks) {
     try {
+      await cleanupCompletedExpiredClubTasks();
       clubTasks = await prisma.clubTask.findMany({
         include: {
           createdBy: {

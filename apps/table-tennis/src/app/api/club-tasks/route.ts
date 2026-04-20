@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canAccessAdminByMember } from "@/lib/admin-access";
+import { cleanupCompletedExpiredClubTasks } from "@/lib/club-task";
 import { buildAppUrl } from "@/lib/request-utils";
 import { parseJstDateTimeInputToUtc } from "@/lib/date-format";
 import { clubTaskSchema, clubTaskUpdateSchema } from "@/lib/form-schemas";
@@ -27,6 +28,8 @@ export async function POST(request: NextRequest) {
     if (!canAccessAdminByMember(member)) {
       return redirectWithError(request, redirectTo, "管理者権限のあるプレイヤーのみ操作できます");
     }
+
+    await cleanupCompletedExpiredClubTasks();
 
     if (intent === "delete") {
       const taskId = String(formData.get("taskId") || "");
