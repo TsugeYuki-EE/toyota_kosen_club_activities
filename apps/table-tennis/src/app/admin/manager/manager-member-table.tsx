@@ -10,6 +10,7 @@ type ManagerMemberRow = {
   nickname: string | null;
   grade: string | null;
   role: "PLAYER" | "MANAGER" | "COACH" | "ADMIN";
+  attendanceRateStartAt: string;
   yearlyGoal: string | null;
   monthlyGoal: string | null;
   attendanceRate: number | null;
@@ -29,16 +30,27 @@ function roleLabel(role: ManagerMemberRow["role"]): string {
 
 export function ManagerMemberTable({ members }: ManagerMemberTableProps) {
   const [showAttendanceRate, setShowAttendanceRate] = useState(false);
+  const [showAttendanceRateStartAt, setShowAttendanceRateStartAt] = useState(false);
   const [showYearlyGoal, setShowYearlyGoal] = useState(false);
   const [showMonthlyGoal, setShowMonthlyGoal] = useState(false);
 
   const colSpan = useMemo(() => {
     let count = 4;
     if (showAttendanceRate) count += 1;
+    if (showAttendanceRateStartAt) count += 1;
     if (showYearlyGoal) count += 1;
     if (showMonthlyGoal) count += 1;
     return count;
-  }, [showAttendanceRate, showYearlyGoal, showMonthlyGoal]);
+  }, [showAttendanceRate, showAttendanceRateStartAt, showYearlyGoal, showMonthlyGoal]);
+
+  function formatJstDate(isoString: string): string {
+    return new Intl.DateTimeFormat("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(isoString));
+  }
 
   return (
     <>
@@ -50,6 +62,14 @@ export function ManagerMemberTable({ members }: ManagerMemberTableProps) {
             onChange={(event) => setShowAttendanceRate(event.target.checked)}
           />
           <span>出席率</span>
+        </label>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={showAttendanceRateStartAt}
+            onChange={(event) => setShowAttendanceRateStartAt(event.target.checked)}
+          />
+          <span>出席率計算開始日</span>
         </label>
         <label className={styles.checkboxLabel}>
           <input
@@ -77,6 +97,7 @@ export function ManagerMemberTable({ members }: ManagerMemberTableProps) {
               <th>学年</th>
               <th>役職</th>
               {showAttendanceRate ? <th>出席率</th> : null}
+              {showAttendanceRateStartAt ? <th>出席率計算開始日</th> : null}
               {showYearlyGoal ? <th>一年の目標</th> : null}
               {showMonthlyGoal ? <th>その月の目標</th> : null}
               <th>アクション</th>
@@ -97,6 +118,7 @@ export function ManagerMemberTable({ members }: ManagerMemberTableProps) {
                     {member.attendanceRate == null ? "-" : `${member.attendanceRate.toFixed(1)}%`}
                   </td>
                 ) : null}
+                {showAttendanceRateStartAt ? <td>{formatJstDate(member.attendanceRateStartAt)}</td> : null}
                 {showYearlyGoal ? <td>{member.yearlyGoal || "-"}</td> : null}
                 {showMonthlyGoal ? <td>{member.monthlyGoal || "-"}</td> : null}
                 <td>

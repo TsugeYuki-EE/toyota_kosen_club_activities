@@ -103,6 +103,7 @@ export default async function AdminManagerPage() {
       nickname: member.nickname,
       grade: member.grade,
       role,
+      attendanceRateStartAt: member.attendanceRateStartAt.toISOString(),
       yearlyGoal: goal?.yearlyGoal ?? null,
       monthlyGoal: goal?.monthlyGoal ?? null,
       attendanceRate,
