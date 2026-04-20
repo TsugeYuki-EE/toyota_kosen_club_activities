@@ -121,6 +121,18 @@ export const practiceMenuSchema = z.object({
   createdByMemberId: z.string().trim().optional(),
 });
 
+// 部活タスク入力フォームです。
+export const clubTaskSchema = z.object({
+  title: z.string().trim().min(1, "タスク名は必須です").max(100, "タスク名は100文字以内で入力してください"),
+  deadlineOn: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "締め切り日を選択してください"),
+});
+
+// 部活タスク更新フォームです。
+export const clubTaskUpdateSchema = z.object({
+  taskId: z.string().trim().min(1, "タスクを選択してください"),
+  deadlineOn: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "締め切り日を選択してください"),
+});
+
 // 個人ごとの試合得点入力フォームです。
 export const playerMatchScoreSchema = z.object({
   matchId: z.string().trim().min(1, "試合を選択してください"),

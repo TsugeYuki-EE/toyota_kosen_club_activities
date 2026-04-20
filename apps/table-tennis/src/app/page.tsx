@@ -12,10 +12,12 @@ import {
 } from "@/lib/date-format";
 import { isJapaneseHolidayDateKey } from "@/lib/japanese-holiday";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
+import { canAccessAdminByMember } from "@/lib/admin-access";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import { fetchActiveAnnouncement } from "@/lib/dual-db-content";
 import { CalendarPdfDownloadButton } from "./calendar-pdf-download-button";
+import { ClubTaskBoard } from "./club-task-board";
 import { FloatingMobileTabs } from "./floating-mobile-tabs";
 import styles from "./home-dashboard.module.css";
 
@@ -108,6 +110,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   }
 
   await autoMarkPreviousDayUnansweredAsAbsent(member.id);
+  const canManageClubTasks = canAccessAdminByMember(member);
 
   const currentMonth = parseMonthParam(params.month);
   const currentMonthParts = getJstDateParts(currentMonth);
@@ -165,6 +168,34 @@ export default async function Home({ searchParams }: HomePageProps) {
       orderBy: { createdAt: "desc" },
     }),
   ]);
+  let clubTasks: Array<{
+    id: string;
+    title: string;
+    deadlineOn: Date;
+    isCompleted: boolean;
+    completedAt: Date | null;
+    createdBy: { id: string; nickname: string | null } | null;
+    createdAt: Date;
+  }> = [];
+
+  if (canManageClubTasks) {
+    try {
+      clubTasks = await prisma.clubTask.findMany({
+        include: {
+          createdBy: {
+            select: {
+              id: true,
+              nickname: true,
+            },
+          },
+        },
+        orderBy: [{ isCompleted: "asc" }, { deadlineOn: "asc" }, { createdAt: "desc" }],
+      });
+    } catch (error) {
+      // migration 未適用などで ClubTask が読めない場合でもホーム画面は表示を継続します。
+      console.error("[home] failed to fetch club tasks", error);
+    }
+  }
   const activeAnnouncement = await fetchActiveAnnouncement(today);
 
   // 出席率を計算
@@ -407,6 +438,10 @@ export default async function Home({ searchParams }: HomePageProps) {
             })}
           </div>
         </section>
+
+        {canManageClubTasks ? (
+          <ClubTaskBoard tasks={clubTasks} redirectTo={`/?month=${monthParam}`} />
+        ) : null}
 
         <section className={styles.summaryCard}>
           <div className={styles.summaryGrid}>

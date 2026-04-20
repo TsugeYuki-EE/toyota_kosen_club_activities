@@ -221,6 +221,165 @@
   gap: 14px;
 }
 
+.taskCard {
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf6 100%);
+  border: 1px solid #e5dbcb;
+  border-radius: 16px;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.taskHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.taskHeader h2 {
+  color: #181516;
+  font-size: 22px;
+}
+
+.taskHeader p {
+  color: #4a3f42;
+  line-height: 1.7;
+}
+
+.taskCreateForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(180px, 0.8fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.taskCreateForm label,
+.taskDeadlineForm {
+  display: grid;
+  gap: 6px;
+  color: #4a3f42;
+  font-size: 14px;
+}
+
+.taskCreateForm input,
+.taskDeadlineForm input {
+  font: inherit;
+  border: 1px solid #c8b4b9;
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+}
+
+.taskPrimaryButton,
+.taskSecondaryButton,
+.taskDangerButton {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+}
+
+.taskPrimaryButton {
+  border: 1px solid #161616;
+  background: #161616;
+  color: #ffffff;
+}
+
+.taskSecondaryButton {
+  border: 1px solid #c8b4b9;
+  background: #ffffff;
+  color: #181516;
+}
+
+.taskDangerButton {
+  border: 1px solid #d37d7d;
+  background: #fff1f1;
+  color: #a11f1f;
+}
+
+.taskTableWrap {
+  overflow-x: auto;
+}
+
+.taskTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.taskTable th,
+.taskTable td {
+  border-top: 1px solid #eadfdd;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.taskTable th {
+  color: #5c4b50;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.taskRowCompleted {
+  opacity: 0.72;
+}
+
+.taskTitle {
+  color: #181516;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.taskMeta {
+  margin-top: 4px;
+  color: #6a585d;
+  font-size: 12px;
+}
+
+.taskStatusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.taskStatusTodo {
+  background: #ffe1e1;
+  color: #983131;
+}
+
+.taskStatusDone {
+  background: #daf4e3;
+  color: #1e6b37;
+}
+
+.taskInlineForm {
+  margin: 0;
+}
+
+.taskActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.taskDeadlineForm {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.taskEmptyState {
+  border: 1px dashed #d8c8c8;
+  border-radius: 12px;
+  background: #fffafa;
+  padding: 16px;
+  color: #6a585d;
+}
+
 .feedbackSection {
   display: flex;
   flex-wrap: wrap;
@@ -1136,6 +1295,16 @@
 
 .summaryLink:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 860px) {
+  .taskCreateForm {
+    grid-template-columns: 1fr;
+  }
+
+  .taskDeadlineForm {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
