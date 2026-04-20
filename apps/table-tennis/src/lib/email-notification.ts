@@ -1,9 +1,9 @@
 const RESEND_SEND_EMAIL_ENDPOINT = "https://api.resend.com/emails";
 
-type SendAttendanceReminderEmailArgs = {
+type SendEmailArgs = {
   to: string;
   message: string;
-  subject?: string;
+  subject: string;
 };
 
 function normalizeEnvValue(value: string | undefined): string | null {
@@ -27,11 +27,11 @@ export function isAttendanceReminderEmailEnabled(): boolean {
   return Boolean(config.apiKey && config.from);
 }
 
-export async function sendAttendanceReminderEmail({
+export async function sendEmail({
   to,
   message,
   subject,
-}: SendAttendanceReminderEmailArgs) {
+}: SendEmailArgs) {
   const config = getAttendanceReminderEmailConfig();
 
   if (!config.apiKey || !config.from) {
@@ -47,7 +47,7 @@ export async function sendAttendanceReminderEmail({
     body: JSON.stringify({
       from: config.from,
       to: [to],
-      subject: subject || "【卓球部】出欠登録をお願いします",
+      subject,
       text: message,
     }),
   });
@@ -63,4 +63,16 @@ export async function sendAttendanceReminderEmail({
   }
 
   return { sent: true, skipped: false };
+}
+
+export async function sendAttendanceReminderEmail({
+  to,
+  message,
+  subject,
+}: Omit<SendEmailArgs, "subject"> & { subject?: string }) {
+  return sendEmail({
+    to,
+    message,
+    subject: subject || "【卓球部】出欠登録をお願いします",
+  });
 }

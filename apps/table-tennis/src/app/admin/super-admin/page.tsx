@@ -3,6 +3,7 @@ import { getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-acce
 import { addJstDays, nowInJst, toDateTimeLocalValue } from "@/lib/date-format";
 import { LocalDateTime } from "@/components/local-date-time";
 import { fetchUnifiedAnnouncements } from "@/lib/dual-db-content";
+import { getRaspberryPiStatus } from "@/lib/system-status";
 import styles from "../admin-dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,7 @@ export default async function SuperAdminPage({ searchParams }: SuperAdminPagePro
   const defaultAnnouncementEnd = toDateTimeLocalValue(nextWeek);
 
   const announcements = await fetchUnifiedAnnouncements();
+  const raspberryPiStatus = await getRaspberryPiStatus();
 
   return (
     <main className={styles.page}>
@@ -127,11 +129,57 @@ export default async function SuperAdminPage({ searchParams }: SuperAdminPagePro
 
       <section className={styles.card}>
         <h2>確認メール テスト送信</h2>
-        <p className={styles.meta}>登録済みメールアドレスを持つ全部員に、確認メールを一斉送信します（テスト用）。</p>
+        <p className={styles.meta}>登録済みメールアドレスを持つ部員へ、確認メールを一斉送信します（admin は除外）。</p>
         <form action="/api/admin-reminders/test" method="post" className={styles.form}>
           <input type="hidden" name="redirectTo" value="/admin/super-admin" />
-          <button type="submit">全部員へ確認メールをテスト送信する</button>
+          <button type="submit">部員へ確認メールをテスト送信する</button>
         </form>
+      </section>
+
+      <section className={styles.card}>
+        <h2>ラズパイステータス</h2>
+        <p className={styles.meta}>毎朝7時に送信する内容と同じ情報を表示します。</p>
+        <div className={styles.notice}>
+          <strong>ホスト</strong>: {raspberryPiStatus.hostname}
+          <br />
+          <strong>OS</strong>: {raspberryPiStatus.platform} {raspberryPiStatus.release} ({raspberryPiStatus.arch})
+          <br />
+          <strong>稼働時間</strong>: {Math.floor(raspberryPiStatus.uptimeSeconds / 3600)}時間{Math.floor((raspberryPiStatus.uptimeSeconds % 3600) / 60)}分
+          <br />
+          <strong>負荷平均</strong>: {raspberryPiStatus.loadAverage.map((value) => value.toFixed(2)).join(" / ")}
+          <br />
+          <strong>メモリ</strong>: {(raspberryPiStatus.memory.freeBytes / 1024 / 1024).toFixed(0)}MB free / {(raspberryPiStatus.memory.totalBytes / 1024 / 1024).toFixed(0)}MB total
+          <br />
+          <strong>Docker</strong>: {raspberryPiStatus.docker.available ? `${raspberryPiStatus.docker.runningContainers ?? 0}/${raspberryPiStatus.docker.totalContainers ?? 0} 実行中` : `利用不可 (${raspberryPiStatus.docker.error || "unknown"})`}
+        </div>
+
+        <div className={styles.memberTableWrap}>
+          <table className={styles.memberTable}>
+            <thead>
+              <tr>
+                <th>コンテナ</th>
+                <th>イメージ</th>
+                <th>状態</th>
+                <th>詳細</th>
+              </tr>
+            </thead>
+            <tbody>
+              {raspberryPiStatus.docker.containers.map((container) => (
+                <tr key={container.name}>
+                  <td>{container.name}</td>
+                  <td>{container.image}</td>
+                  <td>{container.state}</td>
+                  <td>{container.status}</td>
+                </tr>
+              ))}
+              {raspberryPiStatus.docker.containers.length === 0 ? (
+                <tr>
+                  <td colSpan={4}>コンテナ情報を取得できませんでした。</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className={styles.card}>

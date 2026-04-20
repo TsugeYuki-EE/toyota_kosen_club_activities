@@ -1,6 +1,7 @@
 import { AttendanceEventType } from "@prisma/client";
 import { formatDateTime, toDateKey } from "@/lib/date-format";
 import { isAttendanceReminderEmailEnabled, sendAttendanceReminderEmail } from "@/lib/email-notification";
+import { isSuperAdminNickname } from "@/lib/admin-access";
 import { prisma } from "@/lib/prisma";
 
 const REMINDER_LEAD_MINUTES = 90;
@@ -106,11 +107,13 @@ async function sweepOnce(): Promise<ReminderSweepResult> {
         },
       },
       select: {
+        nickname: true,
         email: true,
       },
     });
 
     const recipientEmails = recipientMembers
+      .filter((member) => !isSuperAdminNickname(member.nickname))
       .map((member) => member.email?.trim() || "")
       .filter((email) => email.length > 0);
 
@@ -181,11 +184,13 @@ export async function sendTestConfirmationEmailToAllMembers(): Promise<{ total: 
       },
     },
     select: {
+      nickname: true,
       email: true,
     },
   });
 
   const emails = recipients
+    .filter((member) => !isSuperAdminNickname(member.nickname))
     .map((member) => member.email?.trim() || "")
     .filter((email) => email.length > 0);
 

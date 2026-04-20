@@ -83,6 +83,8 @@ services:
         condition: service_completed_successfully
     ports:
       - "127.0.0.1:3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
       FORCE_HTTPS: ${FORCE_HTTPS:-false}

@@ -69,6 +69,17 @@ model Member {
   clubTasksCreated    ClubTask[]         @relation("ClubTasksCreatedBy")
 }
 
+/// 毎朝 admin に送るラズパイ状態レポートの送信履歴です。
+model DailyAdminStatusReport {
+  id             String   @id @default(cuid())
+  reportDateKey  String   @unique
+  statusText     String
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([sentAt])
+}
+
 /// 出席確認したいイベント本体です。
 model AttendanceEvent {
   id            String              @id @default(cuid())
