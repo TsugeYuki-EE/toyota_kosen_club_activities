@@ -267,6 +267,18 @@ export function FloatingMobileTabs({ monthQuery }: FloatingMobileTabsProps) {
     return getTimerProgress(timerState, remainingSeconds, now);
   }, [remainingSeconds, timerState]);
 
+  const currentTimerDisplaySeconds = useMemo(() => {
+    if (!timerState) {
+      return 0;
+    }
+
+    if (timerState.setCount > 1 && timerProgress) {
+      return timerProgress.setRemainingSeconds;
+    }
+
+    return remainingSeconds;
+  }, [remainingSeconds, timerProgress, timerState]);
+
   useEffect(() => {
     if (!timerState || remainingSeconds <= 0) {
       return;
@@ -409,7 +421,6 @@ export function FloatingMobileTabs({ monthQuery }: FloatingMobileTabsProps) {
       endAt: startedAt + totalDurationSeconds * 1000,
     });
     setStatusMessage(`${preset.label}を開始しました`);
-    setIsTimerSheetOpen(false);
   }
 
   async function createTimerPreset(event: React.FormEvent<HTMLFormElement>) {
@@ -585,14 +596,10 @@ export function FloatingMobileTabs({ monthQuery }: FloatingMobileTabsProps) {
           <span className={styles.mobileTabLabel}>タイマー</span>
           <span className={styles.timerTabValue}>
             {timerState ? (
-              timerState.setCount > 1 && timerProgress ? (
-                <>
-                  <span>{`${timerProgress.currentSetIndex}/${timerState.setCount}`}</span>
-                  <span>{`残り ${timerProgress.remainingSets} セット`}</span>
-                </>
-              ) : (
-                <span>{formatDuration(remainingSeconds)}</span>
-              )
+              <>
+                <span>{formatDuration(currentTimerDisplaySeconds)}</span>
+                {timerState.setCount > 1 && timerProgress ? <span>{`${timerProgress.currentSetIndex}/${timerState.setCount}`}</span> : null}
+              </>
             ) : (
               <span>選択</span>
             )}
@@ -658,10 +665,10 @@ export function FloatingMobileTabs({ monthQuery }: FloatingMobileTabsProps) {
                     </>
                   ) : null}
                 </div>
-                <div className={styles.timerCountdown}>{formatDuration(remainingSeconds)}</div>
+                <div className={styles.timerCountdown}>{formatDuration(currentTimerDisplaySeconds)}</div>
                 {timerState.setCount > 1 && timerProgress ? (
                   <div className={styles.timerSetProgressText}>
-                    現在のセット残り {formatDuration(timerProgress.setRemainingSeconds)} / 残り {timerProgress.remainingSets} セット / 合計 {formatDuration(remainingSeconds)}
+                    現在のセット残り {formatDuration(timerProgress.setRemainingSeconds)} / 残り {timerProgress.remainingSets} セット / 全体残り {formatDuration(remainingSeconds)}
                   </div>
                 ) : null}
                 <div className={styles.timerProgressTrack} aria-hidden="true">
