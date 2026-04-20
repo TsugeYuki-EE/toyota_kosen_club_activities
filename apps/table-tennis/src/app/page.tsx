@@ -202,7 +202,9 @@ export default async function Home({ searchParams }: HomePageProps) {
 
   // 出席率を計算
   const validAttendances = attendanceRecords.filter(
-    (record) => record.status === "ATTEND" || record.status === "LATE" || record.status === "ABSENT"
+    (record) =>
+      record.event.eventType === AttendanceEventType.PRACTICE &&
+      (record.status === "ATTEND" || record.status === "LATE" || record.status === "ABSENT")
   );
   const attendCount = validAttendances.filter((record) => record.status === "ATTEND" || record.status === "LATE").length;
   const attendanceRate = validAttendances.length === 0 ? null : (attendCount / validAttendances.length) * 100;
@@ -452,7 +454,7 @@ export default async function Home({ searchParams }: HomePageProps) {
               <p className={styles.summaryValue}>
                 {attendanceRate === null ? "データなし" : `${attendanceRate.toFixed(1)}%`}
               </p>
-              <p className={styles.summarySubtext}>（練習・試合を含む）</p>
+              <p className={styles.summarySubtext}></p>
             </article>
             {latestNote ? (
               <article className={styles.summaryItem}>
