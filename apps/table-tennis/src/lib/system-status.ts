@@ -36,8 +36,12 @@ export type RaspberryPiStatus = {
     availableBytes: number;
   };
   disk: {
+    path: string;
     totalBytes: number | null;
     freeBytes: number | null;
+    availableBytes: number | null;
+    usedBytes: number | null;
+    usagePercent: number | null;
     note: string;
   };
   docker: {
@@ -50,6 +54,40 @@ export type RaspberryPiStatus = {
     error: string | null;
   };
 };
+
+function bytesToGiB(value: number): string {
+  return `${(value / 1024 / 1024 / 1024).toFixed(2)}GiB`;
+}
+
+function normalizeFsValue(value: number | bigint): number {
+  return typeof value === "bigint" ? Number(value) : value;
+}
+
+export function formatUptimeDhms(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  const days = Math.floor(seconds / 86_400);
+  const hours = Math.floor((seconds % 86_400) / 3_600);
+  const minutes = Math.floor((seconds % 3_600) / 60);
+  const remainedSeconds = seconds % 60;
+  return `${days}d${hours}h${minutes}m${remainedSeconds}s`;
+}
+
+export function formatBytes(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) {
+    return "N/A";
+  }
+
+  const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+  let size = value;
+  let index = 0;
+  while (size >= 1024 && index < units.length - 1) {
+    size /= 1024;
+    index += 1;
+  }
+
+  const digits = index <= 1 ? 0 : 2;
+  return `${size.toFixed(digits)}${units[index]}`;
+}
 
 async function readDockerJson<T>(path: string): Promise<T> {
   return await new Promise<T>((resolve, reject) => {
@@ -82,20 +120,39 @@ async function readDockerJson<T>(path: string): Promise<T> {
   });
 }
 
-async function getDiskUsageNote(): Promise<{ totalBytes: number | null; freeBytes: number | null; note: string }> {
-  const mountPath = "/app";
+async function getDiskUsageNote(): Promise<RaspberryPiStatus["disk"]> {
+  const mountPath = "/";
   try {
-    const stat = await fs.stat(mountPath);
+    const stat = await fs.statfs(mountPath, { bigint: true });
+    const blockSize = normalizeFsValue(stat.bsize);
+    const totalBlocks = normalizeFsValue(stat.blocks);
+    const freeBlocks = normalizeFsValue(stat.bfree);
+    const availableBlocks = normalizeFsValue(stat.bavail);
+
+    const totalBytes = blockSize * totalBlocks;
+    const freeBytes = blockSize * freeBlocks;
+    const availableBytes = blockSize * availableBlocks;
+    const usedBytes = Math.max(totalBytes - freeBytes, 0);
+    const usagePercent = totalBytes > 0 ? Number(((usedBytes / totalBytes) * 100).toFixed(1)) : null;
+
     return {
-      totalBytes: null,
-      freeBytes: null,
-      note: `${mountPath} の存在を確認しました (inode=${stat.ino})`,
+      path: mountPath,
+      totalBytes,
+      freeBytes,
+      availableBytes,
+      usedBytes,
+      usagePercent,
+      note: `${mountPath} total=${bytesToGiB(totalBytes)} free=${bytesToGiB(freeBytes)} available=${bytesToGiB(availableBytes)}`,
     };
   } catch {
     return {
+      path: mountPath,
       totalBytes: null,
       freeBytes: null,
-      note: `${mountPath} は現在参照できません`,
+      availableBytes: null,
+      usedBytes: null,
+      usagePercent: null,
+      note: `${mountPath} のディスク情報を取得できませんでした`,
     };
   }
 }
@@ -174,10 +231,10 @@ export function formatRaspberryPiStatusMessage(status: RaspberryPiStatus): strin
     `取得日時: ${status.collectedAt.toISOString()}`,
     `ホスト: ${status.hostname}`,
     `OS: ${status.platform} ${status.release} (${status.arch})`,
-    `稼働時間: ${Math.floor(status.uptimeSeconds / 3600)}時間${Math.floor((status.uptimeSeconds % 3600) / 60)}分`,
+    `稼働時間: ${formatUptimeDhms(status.uptimeSeconds)}`,
     `負荷平均: ${status.loadAverage.map((value) => value.toFixed(2)).join(" / ")}`,
     `メモリ: ${(status.memory.freeBytes / 1024 / 1024).toFixed(0)}MB free / ${(status.memory.totalBytes / 1024 / 1024).toFixed(0)}MB total`,
-    `ディスク: ${status.disk.note}`,
+    `ディスク(${status.disk.path}): free=${formatBytes(status.disk.freeBytes)} available=${formatBytes(status.disk.availableBytes)} total=${formatBytes(status.disk.totalBytes)} used=${formatBytes(status.disk.usedBytes)} usage=${status.disk.usagePercent !== null ? `${status.disk.usagePercent}%` : "N/A"}`,
   ];
 
   if (status.docker.available) {

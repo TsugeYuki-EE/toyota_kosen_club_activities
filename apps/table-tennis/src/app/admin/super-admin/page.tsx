@@ -3,7 +3,7 @@ import { getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-acce
 import { addJstDays, nowInJst, toDateTimeLocalValue } from "@/lib/date-format";
 import { LocalDateTime } from "@/components/local-date-time";
 import { fetchUnifiedAnnouncements } from "@/lib/dual-db-content";
-import { getRaspberryPiStatus } from "@/lib/system-status";
+import { formatBytes, formatUptimeDhms, getRaspberryPiStatus } from "@/lib/system-status";
 import styles from "../admin-dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -144,11 +144,13 @@ export default async function SuperAdminPage({ searchParams }: SuperAdminPagePro
           <br />
           <strong>OS</strong>: {raspberryPiStatus.platform} {raspberryPiStatus.release} ({raspberryPiStatus.arch})
           <br />
-          <strong>稼働時間</strong>: {Math.floor(raspberryPiStatus.uptimeSeconds / 3600)}時間{Math.floor((raspberryPiStatus.uptimeSeconds % 3600) / 60)}分
+          <strong>稼働時間</strong>: {formatUptimeDhms(raspberryPiStatus.uptimeSeconds)}
           <br />
           <strong>負荷平均</strong>: {raspberryPiStatus.loadAverage.map((value) => value.toFixed(2)).join(" / ")}
           <br />
           <strong>メモリ</strong>: {(raspberryPiStatus.memory.freeBytes / 1024 / 1024).toFixed(0)}MB free / {(raspberryPiStatus.memory.totalBytes / 1024 / 1024).toFixed(0)}MB total
+          <br />
+          <strong>ディスク ({raspberryPiStatus.disk.path})</strong>: free {formatBytes(raspberryPiStatus.disk.freeBytes)} / available {formatBytes(raspberryPiStatus.disk.availableBytes)} / total {formatBytes(raspberryPiStatus.disk.totalBytes)} / used {formatBytes(raspberryPiStatus.disk.usedBytes)} / usage {raspberryPiStatus.disk.usagePercent !== null ? `${raspberryPiStatus.disk.usagePercent}%` : "N/A"}
           <br />
           <strong>Docker</strong>: {raspberryPiStatus.docker.available ? `${raspberryPiStatus.docker.runningContainers ?? 0}/${raspberryPiStatus.docker.totalContainers ?? 0} 実行中` : `利用不可 (${raspberryPiStatus.docker.error || "unknown"})`}
         </div>
