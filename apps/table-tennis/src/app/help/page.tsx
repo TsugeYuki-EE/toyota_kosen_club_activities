@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { readdir } from "node:fs/promises";
+import { access, readdir } from "node:fs/promises";
 import path from "node:path";
 import styles from "./help.module.css";
 
@@ -23,6 +23,7 @@ type GuideItem = {
 
 const EXCLUDED_ROUTE_PREFIXES = ["/api"];
 const EXCLUDED_ROUTES = new Set(["/attendance", "/attendance/submit", "/practice-menus", "/practice-menus/new", "/admin/super-admin"]);
+const HELP_MANUAL_PDF_PATH = "/downloads/table-tennis-help.pdf";
 const FALLBACK_ROUTES = [
   "/",
   "/auth",
@@ -302,8 +303,19 @@ function isDirectNavigableRoute(route: string): boolean {
   return !route.includes("[");
 }
 
+async function hasHelpManualPdf(): Promise<boolean> {
+  const filePath = path.join(process.cwd(), "public", ...HELP_MANUAL_PDF_PATH.split("/").filter(Boolean));
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default async function HelpPage() {
   const appDir = path.join(process.cwd(), "src", "app");
+  const hasManualPdf = await hasHelpManualPdf();
   const allRoutes = await collectAppPageRoutes(appDir);
   const sourceRoutes = allRoutes.length > 0 ? allRoutes : FALLBACK_ROUTES;
   const guides = sortGuideItems(sourceRoutes.filter(includeRoute).map(routeToGuide));
@@ -335,6 +347,18 @@ export default async function HelpPage() {
           この一覧は src/app 配下の page.tsx を読み取って自動生成します。
           本番環境などで読み取りできない場合は、既知のルート一覧を表示します。
         </p>
+      </section>
+
+      <section className={styles.noteCard}>
+        <h2>使い方PDF</h2>
+        <p>配布用の操作マニュアルをPDFでダウンロードできます。</p>
+        {hasManualPdf ? (
+          <a href={HELP_MANUAL_PDF_PATH} download className={styles.manualDownloadLink}>
+            使い方PDFをダウンロード
+          </a>
+        ) : (
+          <p className={styles.dynamicNote}>PDFはまだ配置されていません。配置後にこのボタンが表示されます。</p>
+        )}
       </section>
 
       <section id="guide" className={styles.guideSection}>

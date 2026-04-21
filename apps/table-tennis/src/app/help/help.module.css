@@ -167,6 +167,25 @@
   color: #58758a;
 }
 
+.manualDownloadLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: #c3192d;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.manualDownloadLink:hover {
+  background: #a71527;
+}
+
 @media (max-width: 720px) {
   .main {
     padding: 20px 14px 36px;
