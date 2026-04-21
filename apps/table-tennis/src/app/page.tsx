@@ -203,7 +203,8 @@ export default async function Home({ searchParams }: HomePageProps) {
   // 出席率を計算
   const validAttendances = attendanceRecords.filter(
     (record) =>
-      record.event.eventType === AttendanceEventType.PRACTICE &&
+      (record.event.eventType === AttendanceEventType.PRACTICE ||
+        record.event.eventType === AttendanceEventType.MATCH) &&
       record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime() &&
       (record.status === "ATTEND" || record.status === "LATE" || record.status === "ABSENT")
   );

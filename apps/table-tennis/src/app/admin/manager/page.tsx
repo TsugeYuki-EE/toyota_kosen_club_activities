@@ -83,7 +83,7 @@ export default async function AdminManagerPage() {
       : (member.role as MemberRoleValue);
 
     const validAttendances = member.attendances.filter((record) =>
-      record.event.eventType === "PRACTICE" &&
+      (record.event.eventType === "PRACTICE" || record.event.eventType === "MATCH") &&
       record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime() &&
       (record.status === "ATTEND" || record.status === "LATE" || record.status === "ABSENT")
     );
