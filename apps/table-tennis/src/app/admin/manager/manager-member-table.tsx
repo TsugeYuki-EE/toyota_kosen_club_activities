@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "../admin-dashboard.module.css";
 
 type ManagerMemberRow = {
@@ -28,11 +28,43 @@ function roleLabel(role: ManagerMemberRow["role"]): string {
   return "プレイヤー";
 }
 
-export function ManagerMemberTable({ members }: ManagerMemberTableProps) {
+export function ManagerMemberTable({ members: initialMembers }: ManagerMemberTableProps) {
+  const [members, setMembers] = useState<ManagerMemberRow[]>(initialMembers);
   const [showAttendanceRate, setShowAttendanceRate] = useState(false);
   const [showAttendanceRateStartAt, setShowAttendanceRateStartAt] = useState(false);
   const [showYearlyGoal, setShowYearlyGoal] = useState(false);
   const [showMonthlyGoal, setShowMonthlyGoal] = useState(false);
+
+  // ページロード時に出席率を再計算
+  useEffect(() => {
+    const fetchAttendanceRates = async () => {
+      try {
+        const response = await fetch("/api/admin/manager-attendance-rates");
+        if (!response.ok) {
+          console.error("Failed to fetch attendance rates:", response.statusText);
+          return;
+        }
+
+        const data = await response.json() as {
+          results: Array<{ memberId: string; attendanceRate: number | null }>;
+        };
+
+        // 初期データに API で取得した出席率を反映させる
+        setMembers((prev) =>
+          prev.map((member) => {
+            const rateResult = data.results.find((r) => r.memberId === member.id);
+            return rateResult
+              ? { ...member, attendanceRate: rateResult.attendanceRate }
+              : member;
+          })
+        );
+      } catch (error) {
+        console.error("Error fetching attendance rates:", error);
+      }
+    };
+
+    fetchAttendanceRates();
+  }, []);
 
   const colSpan = useMemo(() => {
     let count = 4;
