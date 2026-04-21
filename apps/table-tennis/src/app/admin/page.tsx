@@ -4,6 +4,7 @@ import { filterOutSuperAdminMembers, getAuthorizedAdminMember, isSuperAdminNickn
 import { prisma } from "@/lib/prisma";
 import { sortMembersByGradeAscending } from "@/lib/member-sort";
 import { AdminMemberTable } from "./admin-member-table";
+import { AttendanceRateResetButton } from "./attendance-rate-reset-button";
 import styles from "./admin-dashboard.module.css";
 
 const PRODUCTION_APP_FALLBACK_URL = "https://toyota-table-tennis-notes.onrender.com";
@@ -122,12 +123,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
         <AdminMemberTable members={members} canManageRoles={canManageRoles} />
         <div className={styles.inlineActions}>
-          <form action="/api/members" method="post" className={styles.inlineForm}>
-            <input type="hidden" name="intent" value="reset-attendance-rate" />
-            <button type="submit" className={styles.dangerButton}>
-              出席率リセット（本日から再計算）
-            </button>
-          </form>
+          <AttendanceRateResetButton />
         </div>
       </section>
 

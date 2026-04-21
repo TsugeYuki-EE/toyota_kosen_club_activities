@@ -205,8 +205,7 @@ export default async function Home({ searchParams }: HomePageProps) {
     (record) =>
       (record.event.eventType === AttendanceEventType.PRACTICE ||
         record.event.eventType === AttendanceEventType.MATCH) &&
-      record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime() &&
-      (record.status === "ATTEND" || record.status === "LATE" || record.status === "ABSENT")
+      record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime()
   );
   const attendCount = validAttendances.filter((record) => record.status === "ATTEND" || record.status === "LATE").length;
   const attendanceRate = validAttendances.length === 0 ? null : (attendCount / validAttendances.length) * 100;
