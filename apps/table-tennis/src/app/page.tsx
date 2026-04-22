@@ -14,6 +14,7 @@ import {
 import { isJapaneseHolidayDateKey } from "@/lib/japanese-holiday";
 import { autoMarkPreviousDayUnansweredAsAbsent } from "@/lib/attendance-auto-absent";
 import { canAccessAdminByMember } from "@/lib/admin-access";
+import { shouldCountForAttendanceRate } from "@/lib/attendance-rate";
 import { cleanupCompletedExpiredClubTasks } from "@/lib/club-task";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
@@ -213,9 +214,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   // 出席率を計算
   const validAttendances = attendanceRecords.filter(
     (record) =>
-      (record.event.eventType === AttendanceEventType.PRACTICE ||
-        record.event.eventType === AttendanceEventType.MATCH) &&
-      record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime()
+      shouldCountForAttendanceRate(record.event.eventType, record.event.scheduledAt, member.attendanceRateStartAt)
   );
   const attendCount = validAttendances.filter((record) => record.status === "ATTEND" || record.status === "LATE").length;
   const attendanceRate = validAttendances.length === 0 ? null : (attendCount / validAttendances.length) * 100;

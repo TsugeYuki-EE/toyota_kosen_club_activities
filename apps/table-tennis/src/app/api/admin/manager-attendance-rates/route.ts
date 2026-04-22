@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { AttendanceEventType } from "@prisma/client";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
+import { shouldCountForAttendanceRate } from "@/lib/attendance-rate";
 import { prisma } from "@/lib/prisma";
 
 type AttendanceRateResult = {
@@ -36,9 +36,7 @@ export async function GET() {
 
   const results: AttendanceRateResult[] = members.map((member) => {
     const validAttendances = member.attendances.filter((record) =>
-      (record.event.eventType === AttendanceEventType.PRACTICE ||
-        record.event.eventType === AttendanceEventType.MATCH) &&
-      record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime()
+      shouldCountForAttendanceRate(record.event.eventType, record.event.scheduledAt, member.attendanceRateStartAt)
     );
 
     const attendCount = validAttendances.filter(

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { filterOutSuperAdminMembers, getAuthorizedAdminMember, isSuperAdminNickname } from "@/lib/admin-access";
+import { shouldCountForAttendanceRate } from "@/lib/attendance-rate";
 import { prisma } from "@/lib/prisma";
 import { sortMembersByGradeAscending } from "@/lib/member-sort";
 import { ManagerMemberTable } from "./manager-member-table";
@@ -83,8 +84,7 @@ export default async function AdminManagerPage() {
       : (member.role as MemberRoleValue);
 
     const validAttendances = member.attendances.filter((record) =>
-      (record.event.eventType === "PRACTICE" || record.event.eventType === "MATCH") &&
-      record.event.scheduledAt.getTime() >= member.attendanceRateStartAt.getTime()
+      shouldCountForAttendanceRate(record.event.eventType, record.event.scheduledAt, member.attendanceRateStartAt)
     );
     const attendCount = validAttendances.filter((record) => record.status === "ATTEND" || record.status === "LATE").length;
     const attendanceRate =
