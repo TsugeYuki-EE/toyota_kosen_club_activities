@@ -5,6 +5,7 @@ import {
   addJstDays,
   createJstDate,
   getJstDateParts,
+  getJstDayRangeFromDateKey,
   getJstMonthRangeUtc,
   getJstWeekday,
   nowInJst,
@@ -124,10 +125,11 @@ export default async function Home({ searchParams }: HomePageProps) {
   const followingMonth = createJstDate(currentMonthParts.year, currentMonthParts.month, 1);
   const dates = buildCalendarDates(currentMonth);
   const todayKey = toDateKey(today);
+  const { startUtc: todayStartUtc, endUtc: todayEndUtc } = getJstDayRangeFromDateKey(todayKey);
   const monthParam = toMonthParam(currentMonth);
   const monthQuery = `?month=${monthParam}`;
 
-  const [events, practiceMenus, attendanceRecords, latestNote] = await Promise.all([
+  const [events, practiceMenus, attendanceRecords, latestNote, todayAttendanceEventCount] = await Promise.all([
     prisma.attendanceEvent.findMany({
       where: {
         scheduledAt: {
@@ -167,6 +169,14 @@ export default async function Home({ searchParams }: HomePageProps) {
         memberId: member.id,
       },
       orderBy: { createdAt: "desc" },
+    }),
+    prisma.attendanceEvent.count({
+      where: {
+        scheduledAt: {
+          gte: todayStartUtc,
+          lt: todayEndUtc,
+        },
+      },
     }),
   ]);
   let clubTasks: Array<{
@@ -283,6 +293,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   }
 
   const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+  const hasTodayAttendanceEvent = todayAttendanceEventCount > 0;
   const daysInMonth = new Date(Date.UTC(currentMonthParts.year, currentMonthParts.month, 0)).getUTCDate();
   const calendarPdfRows = Array.from({ length: daysInMonth }, (_, dayIndex) => {
     const day = dayIndex + 1;
@@ -442,6 +453,13 @@ export default async function Home({ searchParams }: HomePageProps) {
               );
             })}
           </div>
+          {hasTodayAttendanceEvent ? (
+            <div className={styles.calendarBottomAction}>
+              <Link href={`/calendar/${todayKey}/attendance-details`} className={styles.todayAttendanceButton}>
+                今日の全部員の出欠詳細を見る
+              </Link>
+            </div>
+          ) : null}
         </section>
 
         {canManageClubTasks ? (
