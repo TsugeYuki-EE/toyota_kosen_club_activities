@@ -454,6 +454,9 @@ export default async function Home({ searchParams }: HomePageProps) {
           </div>
           {hasTodayAttendanceEvent ? (
             <div className={styles.calendarBottomAction}>
+              <Link href={`/calendar/${todayKey}?from=home`} className={styles.todayAttendanceRegisterButton}>
+                今日の出席を登録する
+              </Link>
               <Link href={`/calendar/${todayKey}/attendance-details`} className={styles.todayAttendanceButton}>
                 今日の全部員の出欠詳細を見る
               </Link>
