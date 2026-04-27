@@ -79,6 +79,30 @@ def run_scp(source: str, dest: str) -> None:
   run(scp_cmd)
 
 
+def remove_path(path: Path) -> None:
+  if not path.exists():
+    return
+
+  if path.is_dir():
+    shutil.rmtree(path)
+  else:
+    path.unlink()
+
+
+def prune_docker_builder_cache() -> None:
+  try:
+    run(["docker", "builder", "prune", "-af"])
+  except subprocess.CalledProcessError as error:
+    print(f"\nDocker builder cache cleanup skipped: {error}", file=sys.stderr)
+
+
+def remove_local_image(image_tag: str) -> None:
+  try:
+    run(["docker", "image", "rm", "-f", image_tag])
+  except subprocess.CalledProcessError:
+    pass
+
+
 def wait_for_tcp_port(host: str, port: int, *, timeout_seconds: float = 15.0) -> None:
   deadline = time.monotonic() + timeout_seconds
   while time.monotonic() < deadline:
@@ -276,7 +300,7 @@ def parse_args() -> argparse.Namespace:
   parser.add_argument("--skip-build", action="store_true", help="Skip docker buildx step")
   parser.add_argument("--skip-transfer", action="store_true", help="Skip image stream/transfer step")
   parser.add_argument("--skip-start", action="store_true", help="Skip remote docker compose up step")
-  parser.add_argument("--keep-local-bundle", action="store_true", help="Do not delete local temporary files and build cache")
+  parser.add_argument("--keep-local-bundle", action="store_true", help="Keep local temporary files, build cache, and the built image")
   return parser.parse_args()
 
 
@@ -343,6 +367,9 @@ def main() -> int:
           registry_tunnel_proc.kill()
         registry_tunnel_proc = None
 
+    if not args.keep_local_bundle:
+      prune_docker_builder_cache()
+
   if not args.skip_transfer:
     remote_bundle_quoted = shlex.quote(args.remote_bundle_dir)
     run_remote(pi_target, f"mkdir -p {remote_bundle_quoted}")
@@ -379,18 +406,15 @@ def main() -> int:
     run_remote(pi_target, remote_script)
 
   if not args.keep_local_bundle:
-    if override_file.exists():
-      override_file.unlink()
-    try:
-      bundle_dir.rmdir()
-    except OSError:
-      pass
+    remove_local_image(build_image_tag)
+    remove_path(override_file)
+    remove_path(bundle_dir)
 
   print("\nDone.")
   print("If startup failed, check on Pi:")
   print(f"  ssh {pi_target} 'cd {args.remote_dir} && docker compose logs -f {args.service}'")
   if args.transfer_mode == "registry":
-    print("Registry mode used; build cache is kept under .tmp-prebuilt-deploy/buildx-cache.")
+    print("Registry mode used; local build cache is cleaned up unless --keep-local-bundle is set.")
   return 0
 
 

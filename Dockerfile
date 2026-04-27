@@ -15,13 +15,14 @@ RUN apk add --no-cache openssl libc6-compat
 
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
-
 COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
-RUN --mount=type=cache,target=/root/.npm npm --prefix apps/table-tennis ci --no-audit --no-fund
-
 COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
-RUN --mount=type=cache,target=/root/.npm npm --prefix apps/handball ci --no-audit --no-fund
+RUN set -eux; \
+  npm ci --no-audit --no-fund; \
+  npm --prefix apps/table-tennis ci --no-audit --no-fund; \
+  npm --prefix apps/handball ci --no-audit --no-fund; \
+  npm cache clean --force; \
+  rm -rf /root/.npm
 
 FROM base AS builder
 COPY --from=deps /workspace/node_modules ./node_modules
@@ -37,7 +38,7 @@ ENV NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres?schema=public
 ENV ADMIN_VIEW_KEY=placeholder
 
-RUN --mount=type=cache,target=/root/.npm sh -c 'set -e; \
+RUN sh -c 'set -e; \
   n=0; \
   until [ "$n" -ge 5 ]; do \
     npm --prefix apps/table-tennis run db:generate && break; \
@@ -46,7 +47,7 @@ RUN --mount=type=cache,target=/root/.npm sh -c 'set -e; \
     sleep $((n * 5)); \
   done; \
   [ "$n" -lt 5 ]'
-RUN --mount=type=cache,target=/root/.npm sh -c 'set -e; \
+RUN sh -c 'set -e; \
   n=0; \
   until [ "$n" -ge 5 ]; do \
     npm --prefix apps/handball run db:generate && break; \
@@ -55,24 +56,21 @@ RUN --mount=type=cache,target=/root/.npm sh -c 'set -e; \
     sleep $((n * 5)); \
   done; \
   [ "$n" -lt 5 ]'
-RUN --mount=type=cache,target=/root/.npm \
-  --mount=type=cache,target=/workspace/apps/table-tennis/.next/cache \
-  npm --prefix apps/table-tennis run build
-RUN --mount=type=cache,target=/root/.npm \
-  --mount=type=cache,target=/workspace/apps/handball/.next/cache \
-  npm --prefix apps/handball run build
-
-FROM deps AS runtime-deps
-RUN --mount=type=cache,target=/root/.npm npm prune --omit=dev --omit=optional --no-audit --no-fund
-RUN --mount=type=cache,target=/root/.npm npm --prefix apps/table-tennis prune --omit=dev --omit=optional --no-audit --no-fund
-RUN --mount=type=cache,target=/root/.npm npm --prefix apps/handball prune --omit=dev --omit=optional --no-audit --no-fund
+RUN sh -c 'set -e; \
+  npm --prefix apps/table-tennis run build; \
+  npm --prefix apps/handball run build; \
+  npm prune --omit=dev --omit=optional --no-audit --no-fund; \
+  npm --prefix apps/table-tennis prune --omit=dev --omit=optional --no-audit --no-fund; \
+  npm --prefix apps/handball prune --omit=dev --omit=optional --no-audit --no-fund; \
+  npm cache clean --force; \
+  rm -rf /root/.npm /workspace/apps/table-tennis/.next/cache /workspace/apps/handball/.next/cache'
 
 FROM base AS runner
 ENV NODE_ENV=production
 
-COPY --from=runtime-deps /workspace/node_modules ./node_modules
-COPY --from=runtime-deps /workspace/apps/table-tennis/node_modules ./apps/table-tennis/node_modules
-COPY --from=runtime-deps /workspace/apps/handball/node_modules ./apps/handball/node_modules
+COPY --from=builder /workspace/node_modules ./node_modules
+COPY --from=builder /workspace/apps/table-tennis/node_modules ./apps/table-tennis/node_modules
+COPY --from=builder /workspace/apps/handball/node_modules ./apps/handball/node_modules
 
 COPY --from=builder /workspace/gateway ./gateway
 
