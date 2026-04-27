@@ -4,7 +4,7 @@ import { isAttendanceReminderEmailEnabled, sendAttendanceReminderEmail } from "@
 import { isSuperAdminNickname } from "@/lib/admin-access";
 import { prisma } from "@/lib/prisma";
 
-const REMINDER_LEAD_MINUTES = 30;
+const REMINDER_LEAD_MINUTES = 45;
 const REMINDER_SCAN_WINDOW_MINUTES = 2;
 const REMINDER_INTERVAL_MS = 60_000;
 
@@ -42,7 +42,7 @@ function buildReminderMessage(event: AttendanceEventReminder): string {
     "【卓球部】出欠登録のお願い",
     `予定: ${event.title}`,
     `開始: ${formatDateTime(event.scheduledAt)}`,
-    `開始30分前です。出欠登録をお願いします。`,
+    `開始${REMINDER_LEAD_MINUTES}分前です。出欠登録をお願いします。`,
     `確認: ${attendanceUrl}`,
   ];
 
