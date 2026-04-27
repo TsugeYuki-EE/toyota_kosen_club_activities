@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AttendanceEventType } from "@prisma/client";
 import { getDefaultEventTimesForDateKey } from "@/lib/event-default-times";
 import styles from "../events-management.module.css";
 
@@ -15,6 +16,7 @@ export function SingleEventCreateForm({
   defaultStartTime,
   defaultEndTime,
 }: SingleEventCreateFormProps) {
+  const [eventType, setEventType] = useState<AttendanceEventType>(AttendanceEventType.PRACTICE);
   const [eventDate, setEventDate] = useState(defaultDate);
   const [eventTime, setEventTime] = useState(defaultStartTime);
   const [eventEndTime, setEventEndTime] = useState(defaultEndTime);
@@ -31,9 +33,13 @@ export function SingleEventCreateForm({
       <input type="hidden" name="redirectTo" value="/admin/events/single" />
       <label>
         種別
-        <select name="eventType" defaultValue="PRACTICE">
-          <option value="PRACTICE">練習</option>
-          <option value="MATCH">試合</option>
+        <select
+          name="eventType"
+          value={eventType}
+          onChange={(event) => setEventType(event.currentTarget.value as AttendanceEventType)}
+        >
+          <option value={AttendanceEventType.PRACTICE}>練習</option>
+          <option value={AttendanceEventType.MATCH}>試合</option>
         </select>
       </label>
       <label>
@@ -67,14 +73,18 @@ export function SingleEventCreateForm({
           onChange={(event) => setEventEndTime(event.currentTarget.value)}
         />
       </label>
-      <label>
-        対戦相手 (試合の場合)
-        <input type="text" name="matchOpponent" placeholder="例: 豊田北高校" />
-      </label>
-      <label>
-        試合詳細 (試合の場合)
-        <textarea name="matchDetail" rows={2} placeholder="例: 会場、集合時刻、ユニフォーム情報" />
-      </label>
+      {eventType === AttendanceEventType.MATCH ? (
+        <>
+          <label>
+            対戦相手 (試合の場合)
+            <input type="text" name="matchOpponent" placeholder="例: 豊田北高校" />
+          </label>
+          <label>
+            試合詳細 (試合の場合)
+            <textarea name="matchDetail" rows={2} placeholder="例: 会場、集合時刻、ユニフォーム情報" />
+          </label>
+        </>
+      ) : null}
       <label>
         補足
         <textarea name="note" rows={2} />

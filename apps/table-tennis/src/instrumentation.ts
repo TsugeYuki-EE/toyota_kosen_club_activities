@@ -1,7 +1,13 @@
-import { startAttendanceReminderScheduler } from "@/lib/attendance-reminder-scheduler";
-import { startDailyAdminStatusScheduler } from "@/lib/admin-daily-status-scheduler";
-
 export async function register(): Promise<void> {
-  startAttendanceReminderScheduler();
-  startDailyAdminStatusScheduler();
+  if (process.env.NEXT_RUNTIME !== "nodejs") {
+    return;
+  }
+
+  const [attendanceReminderScheduler, dailyAdminStatusScheduler] = await Promise.all([
+    import("@/lib/attendance-reminder-scheduler"),
+    import("@/lib/admin-daily-status-scheduler"),
+  ]);
+
+  attendanceReminderScheduler.startAttendanceReminderScheduler();
+  dailyAdminStatusScheduler.startDailyAdminStatusScheduler();
 }

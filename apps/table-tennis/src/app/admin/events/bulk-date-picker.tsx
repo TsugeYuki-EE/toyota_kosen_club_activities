@@ -131,6 +131,7 @@ function getTodayJstDateValue(): string {
 }
 
 export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
+  const [eventType, setEventType] = useState<AttendanceEventType>(AttendanceEventType.PRACTICE);
   const [monthValue, setMonthValue] = useState(defaultDate.slice(0, 7));
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const todayDateValue = useMemo(() => getTodayJstDateValue(), []);
@@ -194,7 +195,11 @@ export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
 
       <label>
         種別
-        <select name="eventType" defaultValue={AttendanceEventType.PRACTICE}>
+        <select
+          name="eventType"
+          value={eventType}
+          onChange={(event) => setEventType(event.currentTarget.value as AttendanceEventType)}
+        >
           <option value={AttendanceEventType.PRACTICE}>練習</option>
           <option value={AttendanceEventType.MATCH}>試合</option>
         </select>
@@ -310,15 +315,19 @@ export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
         <input type="time" name="eventEndTime" step={300} />
       </label>
 
-      <label>
-        対戦相手 (試合の場合)
-        <input type="text" name="matchOpponent" placeholder="例: 豊田北高校" />
-      </label>
+      {eventType === AttendanceEventType.MATCH ? (
+        <>
+          <label>
+            対戦相手 (試合の場合)
+            <input type="text" name="matchOpponent" placeholder="例: 豊田北高校" />
+          </label>
 
-      <label>
-        試合詳細 (試合の場合)
-        <textarea name="matchDetail" rows={2} placeholder="例: 会場、集合時刻、ユニフォーム情報" />
-      </label>
+          <label>
+            試合詳細 (試合の場合)
+            <textarea name="matchDetail" rows={2} placeholder="例: 会場、集合時刻、ユニフォーム情報" />
+          </label>
+        </>
+      ) : null}
 
       <label>
         補足
