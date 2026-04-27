@@ -224,11 +224,43 @@ export default async function SuperAdminPage({ searchParams }: SuperAdminPagePro
             <input
               type="password"
               name="executionPassword"
-              placeholder="devdev"
+              placeholder="管理者ログインパスワード"
               required
             />
           </label>
           <button type="submit" className={styles.dangerButton}>予定と試合スコアを全削除する</button>
+        </form>
+      </section>
+
+      <section className={styles.card}>
+        <h2>DB 軽量化</h2>
+        <p className={styles.meta}>不要データ削除と DB メンテナンスを実行します。通常は通常モード、容量逼迫時のみ強力モードを使ってください。</p>
+        <form action="/api/admin-data/compact" method="post" className={styles.form}>
+          <input type="hidden" name="intent" value="compact-database" />
+          <input type="hidden" name="redirectTo" value="/admin/super-admin" />
+          <label>
+            確認キーワード
+            <input
+              type="text"
+              name="confirmText"
+              placeholder="軽量化実行"
+              required
+            />
+          </label>
+          <label>
+            実行パスワード
+            <input
+              type="password"
+              name="executionPassword"
+              placeholder="管理者ログインパスワード"
+              required
+            />
+          </label>
+          <label>
+            <input type="checkbox" name="aggressive" value="1" />
+            強力モードを使う（VACUUM FULL。処理中にロックが発生しやすい）
+          </label>
+          <button type="submit">DB 軽量化を実行する</button>
         </form>
       </section>
     </main>
