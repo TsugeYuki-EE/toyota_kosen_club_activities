@@ -83,6 +83,14 @@ export const selfAttendanceSubmitSchema = z.object({
   eventId: z.string().trim().min(1, "イベントを選択してください"),
   status: z.nativeEnum(AttendanceStatus),
   comment: z.string().trim().optional(),
+}).superRefine((value, ctx) => {
+  if ((value.status === AttendanceStatus.LATE || value.status === AttendanceStatus.ABSENT) && !value.comment) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["comment"],
+      message: "遅刻・欠席の場合はコメントを入力してください",
+    });
+  }
 });
 
 // メイン画面から送るフィードバック入力です。

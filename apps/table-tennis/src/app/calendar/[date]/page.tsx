@@ -8,6 +8,7 @@ import { LocalDate, LocalDateTime, LocalDateTimeRange } from "@/components/local
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/member-page-shared.module.css";
+import { AttendanceSubmitForm } from "./attendance-submit-form";
 import { EventDeleteButton } from "./event-delete-button";
 
 export const dynamic = "force-dynamic";
@@ -188,27 +189,12 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
                 <p className={styles.infoTitle}>あなたはこのイベントに未回答です。</p>
               ) : null}
 
-              <form action="/api/self-attendance" method="post" className={styles.form}>
-                <input
-                  type="hidden"
-                  name="redirectTo"
-                  value="/"
-                />
-                <input type="hidden" name="eventId" value={event.id} />
-                <label>
-                  自分の出席状況
-                  <select name="status" defaultValue={myRecord?.status || AttendanceStatus.ATTEND}>
-                    <option value={AttendanceStatus.ATTEND}>出席</option>
-                    <option value={AttendanceStatus.LATE}>遅刻</option>
-                    <option value={AttendanceStatus.ABSENT}>欠席</option>
-                  </select>
-                </label>
-                <label>
-                  コメント
-                  <textarea name="comment" rows={3} defaultValue={myRecord?.comment || ""} />
-                </label>
-                <button type="submit" className={styles.button}>このイベントに提出する</button>
-              </form>
+              <AttendanceSubmitForm
+                eventId={event.id}
+                redirectTo="/"
+                initialStatus={myRecord?.status || AttendanceStatus.ATTEND}
+                initialComment={myRecord?.comment || ""}
+              />
 
               <Link href={`/calendar/${date}/attendance-details`} className={styles.secondaryLink}>
                 出欠詳細情報を見る
