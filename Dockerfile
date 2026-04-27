@@ -18,9 +18,12 @@ COPY package.json package-lock.json ./
 COPY apps/table-tennis/package.json apps/table-tennis/package-lock.json ./apps/table-tennis/
 COPY apps/handball/package.json apps/handball/package-lock.json ./apps/handball/
 RUN set -eux; \
-  npm ci --no-audit --no-fund; \
-  npm --prefix apps/table-tennis ci --no-audit --no-fund; \
-  npm --prefix apps/handball ci --no-audit --no-fund; \
+  npm ci --no-audit --no-fund & root_ci_pid=$!; \
+  npm --prefix apps/table-tennis ci --no-audit --no-fund & table_tennis_ci_pid=$!; \
+  npm --prefix apps/handball ci --no-audit --no-fund & handball_ci_pid=$!; \
+  wait $root_ci_pid; \
+  wait $table_tennis_ci_pid; \
+  wait $handball_ci_pid; \
   npm cache clean --force; \
   rm -rf /root/.npm
 
@@ -57,8 +60,10 @@ RUN sh -c 'set -e; \
   done; \
   [ "$n" -lt 5 ]'
 RUN sh -c 'set -e; \
-  npm --prefix apps/table-tennis run build; \
-  npm --prefix apps/handball run build; \
+  npm --prefix apps/table-tennis run build & table_tennis_build_pid=$!; \
+  npm --prefix apps/handball run build & handball_build_pid=$!; \
+  wait $table_tennis_build_pid; \
+  wait $handball_build_pid; \
   npm prune --omit=dev --omit=optional --no-audit --no-fund; \
   npm --prefix apps/table-tennis prune --omit=dev --omit=optional --no-audit --no-fund; \
   npm --prefix apps/handball prune --omit=dev --omit=optional --no-audit --no-fund; \
