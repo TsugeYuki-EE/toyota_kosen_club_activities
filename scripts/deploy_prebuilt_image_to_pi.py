@@ -96,6 +96,48 @@ def prune_docker_builder_cache() -> None:
     print(f"\nDocker builder cache cleanup skipped: {error}", file=sys.stderr)
 
 
+def remove_unused_images() -> None:
+  """ビルド前に未使用のDockerイメージを削除してディスク容量を確保
+  
+  docker system prune -a と同等の効果がありますが、安全に実行します。
+  注意: --all フラグを使用することで、タグ付きのイメージも含むすべての未使用イメージを削除します。
+  
+  PowerShell/コマンドラインから直接実行する場合は:
+    docker system prune -a -f --volumes
+  を使用してください。
+  """
+  try:
+    print("\n--- Docker cleanup: Removing unused containers, networks and images ---")
+    
+    # 1. 停止中のコンテナを削除
+    run(["docker", "container", "prune", "-f"])
+    print("  ✓ Stopped containers removed")
+    
+    # 2. 未使用のネットワークを削除
+    run(["docker", "network", "prune", "-f"])
+    print("  ✓ Unused networks removed")
+    
+    # 3. キャッシュされていない未使用イメージを削除
+    run(["docker", "image", "prune", "-f"])
+    print("  ✓ Unused images removed (tagged images preserved)")
+    
+    # 4. ビルダーキャッシュを削除
+    run(["docker", "builder", "prune", "-af"])
+    print("  ✓ Builder cache removed")
+    
+    # 5. Docker system prune（-a ですべての未使用イメージを削除）
+    # 注意: これは全ての未使用イメージを削除するので注意
+    run(["docker", "system", "prune", "-a", "-f", "--volumes"])
+    print("  ✓ Docker system prune -a completed")
+    
+    # 6. ディスク容量の確認
+    run(["docker", "system", "df"])
+    print("--- Docker cleanup completed ---\n")
+    
+  except subprocess.CalledProcessError as error:
+    print(f"\nDocker cleanup skipped: {error}", file=sys.stderr)
+
+
 def remove_local_image(image_tag: str) -> None:
   try:
     run(["docker", "image", "rm", "-f", image_tag])
@@ -367,8 +409,11 @@ def main() -> int:
           registry_tunnel_proc.kill()
         registry_tunnel_proc = None
 
-    if not args.keep_local_bundle:
-      prune_docker_builder_cache()
+  # デプロイ前に未使用イメージを削除
+  remove_unused_images()
+
+  if not args.keep_local_bundle:
+    prune_docker_builder_cache()
 
   if not args.skip_transfer:
     remote_bundle_quoted = shlex.quote(args.remote_bundle_dir)

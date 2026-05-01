@@ -36,6 +36,10 @@ function statusLabel(status: AttendanceStatus): string {
     return "遅刻";
   }
 
+  if (status === AttendanceStatus.EARLY_LEAVE) {
+    return "早退";
+  }
+
   if (status === AttendanceStatus.ABSENT) {
     return "欠席";
   }
@@ -154,6 +158,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
         {events.map((event) => {
           const attendMembers = event.records.filter((record) => record.status === AttendanceStatus.ATTEND).map((record) => record.member.name);
           const lateMembers = event.records.filter((record) => record.status === AttendanceStatus.LATE).map((record) => record.member.name);
+          const earlyLeaveMembers = event.records.filter((record) => record.status === AttendanceStatus.EARLY_LEAVE).map((record) => record.member.name);
           const absentMembers = event.records.filter((record) => record.status === AttendanceStatus.ABSENT).map((record) => record.member.name);
           const answeredIds = new Set(event.records.map((record) => record.memberId));
           const unansweredMembers = players.filter((player) => !answeredIds.has(player.id)).map((player) => player.name);
@@ -175,13 +180,53 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
                   <div className={styles.statusRow}>
                     <span className={`${styles.statusBadge} ${styles.attend}`}>出席 {attendMembers.length}</span>
                     <span className={`${styles.statusBadge} ${styles.late}`}>遅刻 {lateMembers.length}</span>
+                    <span className={`${styles.statusBadge} ${styles.earlyLeave}`}>早退 {earlyLeaveMembers.length}</span>
                     <span className={`${styles.statusBadge} ${styles.absent}`}>欠席 {absentMembers.length}</span>
                     <span className={`${styles.statusBadge} ${styles.unknown}`}>未回答 {unansweredMembers.length}</span>
                   </div>
                   <p className={styles.meta}>出席: {attendMembers.length > 0 ? attendMembers.join("、") : "なし"}</p>
                   <p className={styles.meta}>遅刻: {lateMembers.length > 0 ? lateMembers.join("、") : "なし"}</p>
+                  <p className={styles.meta}>早退: {earlyLeaveMembers.length > 0 ? earlyLeaveMembers.join("、") : "なし"}</p>
                   <p className={styles.meta}>欠席: {absentMembers.length > 0 ? absentMembers.join("、") : "なし"}</p>
                   <p className={styles.meta}>未回答: {unansweredMembers.length > 0 ? unansweredMembers.join("、") : "なし"}</p>
+
+                {lateMembers.length > 0 || absentMembers.length > 0 || earlyLeaveMembers.length > 0 ? (
+                  <div style={{ marginTop: '16px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '8px', padding: '12px' }}>
+                    <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#333' }}>欠席・遅刻・早退者一覧</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '8px 4px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>名前</th>
+                          <th style={{ padding: '8px 4px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>状態</th>
+                          <th style={{ padding: '8px 4px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>コメント</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {event.records
+                          .filter((record) => record.status === AttendanceStatus.ABSENT || record.status === AttendanceStatus.LATE || record.status === AttendanceStatus.EARLY_LEAVE)
+                          .map((record) => (
+                            <tr key={record.id} style={{ borderBottom: '1px solid #eee' }}>
+                              <td style={{ padding: '8px 4px' }}>{record.member.name}</td>
+                              <td style={{ padding: '8px 4px', textAlign: 'center' }}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  backgroundColor: record.status === AttendanceStatus.ABSENT ? '#fee2e2' : record.status === AttendanceStatus.LATE ? '#fef3c7' : '#dbeafe',
+                                  color: record.status === AttendanceStatus.ABSENT ? '#991b1b' : record.status === AttendanceStatus.LATE ? '#92400e' : '#1e40af'
+                                }}>
+                                  {record.status === AttendanceStatus.ABSENT ? '欠席' : record.status === AttendanceStatus.LATE ? '遅刻' : '早退'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '8px 4px', fontSize: '12px', color: '#666' }}>{record.comment || '-'}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
                 </>
               ) : null}
 

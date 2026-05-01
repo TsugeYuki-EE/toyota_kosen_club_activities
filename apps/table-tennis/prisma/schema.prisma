@@ -20,6 +20,7 @@ enum AttendanceStatus {
   ATTEND
   ABSENT
   LATE
+  EARLY_LEAVE
   UNKNOWN
 }
 

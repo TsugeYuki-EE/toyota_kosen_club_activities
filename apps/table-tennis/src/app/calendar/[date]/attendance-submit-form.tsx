@@ -191,6 +191,7 @@ export function AttendanceSubmitForm({
           >
             <option value={AttendanceStatus.ATTEND}>出席</option>
             <option value={AttendanceStatus.LATE}>遅刻</option>
+            <option value={AttendanceStatus.EARLY_LEAVE}>早退</option>
             <option value={AttendanceStatus.ABSENT}>欠席</option>
           </select>
         </label>
