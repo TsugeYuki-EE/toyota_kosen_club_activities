@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { NavigationLoadingOverlay } from "@/components/navigation-loading-overlay";
 import { SiteCredit } from "@/components/site-credit";
+import { GlobalReleaseNotesPopup } from "./global-release-notes-popup";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,6 +36,9 @@ export default function RootLayout({
         <footer className="globalFooter" aria-label="クレジット表記">
           <SiteCredit />
         </footer>
+        <Suspense fallback={null}>
+          <GlobalReleaseNotesPopup />
+        </Suspense>
       </body>
     </html>
   );

@@ -53,6 +53,7 @@ model Member {
   canAccessAdmin      Boolean            @default(false)
   role                Role               @default(PLAYER)
   attendanceRateStartAt DateTime         @default(now())
+   lastActivityAt      DateTime?
   createdAt           DateTime           @default(now())
   attendances         AttendanceRecord[]
   weights             WeightRecord[]
