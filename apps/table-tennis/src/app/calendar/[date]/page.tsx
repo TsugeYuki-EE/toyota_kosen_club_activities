@@ -156,11 +156,15 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
 
       <section className={styles.listGrid}>
         {events.map((event) => {
-          const attendMembers = event.records.filter((record) => record.status === AttendanceStatus.ATTEND).map((record) => record.member.name);
-          const lateMembers = event.records.filter((record) => record.status === AttendanceStatus.LATE).map((record) => record.member.name);
-          const earlyLeaveMembers = event.records.filter((record) => record.status === AttendanceStatus.EARLY_LEAVE).map((record) => record.member.name);
-          const absentMembers = event.records.filter((record) => record.status === AttendanceStatus.ABSENT).map((record) => record.member.name);
-          const answeredIds = new Set(event.records.map((record) => record.memberId));
+          // 管理者の出席状態を簡易表示から除外
+          const nonAdminRecords = event.records.filter((record) => {
+            return record.member.role !== "ADMIN";
+          });
+          const attendMembers = nonAdminRecords.filter((record) => record.status === AttendanceStatus.ATTEND).map((record) => record.member.name);
+          const lateMembers = nonAdminRecords.filter((record) => record.status === AttendanceStatus.LATE).map((record) => record.member.name);
+          const earlyLeaveMembers = nonAdminRecords.filter((record) => record.status === AttendanceStatus.EARLY_LEAVE).map((record) => record.member.name);
+          const absentMembers = nonAdminRecords.filter((record) => record.status === AttendanceStatus.ABSENT).map((record) => record.member.name);
+          const answeredIds = new Set(nonAdminRecords.map((record) => record.memberId));
           const unansweredMembers = players.filter((player) => !answeredIds.has(player.id)).map((player) => player.name);
           const myRecord = event.records.find((record) => record.memberId === member.id);
 
