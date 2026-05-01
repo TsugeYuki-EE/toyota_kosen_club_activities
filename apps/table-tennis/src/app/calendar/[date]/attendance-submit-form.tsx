@@ -73,7 +73,7 @@ export function AttendanceSubmitForm({
         }
         const apiResponse = await response.json();
         // APIは { releaseNotes: [...] } 形式で返す
-        const apiReleaseNotes: Array<{ id: string; version: string; title: string; content: string; createdBy: { nickname: string | null }; createdAt: Date }> = (apiResponse.releaseNotes) || [];
+        const apiReleaseNotes: Array<{ id: string; version: string; title: string; content: string; createdBy: { nickname: string | null }; createdAt: Date }> = (apiResponse?.releaseNotes) || [];
 
         console.log('[ReleaseNotes] total release notes:', apiReleaseNotes.length);
         if (apiReleaseNotes.length > 0) {
@@ -130,19 +130,22 @@ export function AttendanceSubmitForm({
   // フォーム提出時
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     if (isFormSubmitting) return;
     
     // 遅刻・欠席の場合、コメントチェック
-    if (status !== AttendanceStatus.ATTEND && !comment.trim()) {
+    if (status !== 'ATTEND' && !comment.trim()) {
       alert('理由を記入してください');
       return;
     }
 
     setIsFormSubmitting(true);
     
-    const formData = new FormData(e.currentTarget);
-    formData.set('status', status);
-    formData.set('comment', comment);
+    const formData = new FormData();
+    formData.append('eventId', eventId);
+    formData.append('status', status);
+    formData.append('comment', comment);
+    formData.append('redirectTo', redirectTo);
 
     try {
       const response = await fetch('/api/self-attendance', {
@@ -151,16 +154,16 @@ export function AttendanceSubmitForm({
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Attendance] API error:', errorText);
         throw new Error('提出に失敗しました');
       }
 
-      // 提出成功后、リリースノートを確認
-      if (isModalOpen) {
-        await closeModal();
-      }
+      // 成功後、ページをリロードして新しい状態を表示
+      window.location.href = redirectTo + '?ok=attendance';
     } catch (error) {
+      console.error('[Attendance] Submit error:', error);
       alert('提出に失敗しました。もう一度お試しください。');
-    } finally {
       setIsFormSubmitting(false);
     }
   };
@@ -178,21 +181,17 @@ export function AttendanceSubmitForm({
 
   return (
     <div>
-      <form onSubmit={handleSubmit} action="/api/self-attendance" method="post" className={styles.form}>
-        <input type="hidden" name="redirectTo" value={redirectTo} />
-        <input type="hidden" name="eventId" value={eventId} />
-        <input type="hidden" name="status" value={status} />
-        <input type="hidden" name="comment" value={comment} />
+      <form onSubmit={handleSubmit} className={styles.form}>
         <label>
           自分の出席状況
           <select
             value={status}
             onChange={(event) => setStatus(event.currentTarget.value as AttendanceStatus)}
           >
-            <option value={AttendanceStatus.ATTEND}>出席</option>
-            <option value={AttendanceStatus.LATE}>遅刻</option>
-            <option value={AttendanceStatus.EARLY_LEAVE}>早退</option>
-            <option value={AttendanceStatus.ABSENT}>欠席</option>
+            <option value="ATTEND">出席</option>
+            <option value="LATE">遅刻</option>
+            <option value="EARLY_LEAVE">早退</option>
+            <option value="ABSENT">欠席</option>
           </select>
         </label>
 

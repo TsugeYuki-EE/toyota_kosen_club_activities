@@ -175,6 +175,20 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
                   {event.note ? <p className={styles.meta}>補足: {event.note}</p> : null}
                 </div>
               ) : null}
+
+              {/* 自分の出席状況送信フォーム（上に移動） */}
+              {isHomeCalendarMode && !myRecord ? (
+                <p className={styles.infoTitle}>あなたはこのイベントに未回答です。</p>
+              ) : null}
+
+              <AttendanceSubmitForm
+                eventId={event.id}
+                redirectTo="/"
+                initialStatus={myRecord?.status || AttendanceStatus.ATTEND}
+                initialComment={myRecord?.comment || ""}
+              />
+
+              {/* 簡易出欠詳細（下に移動） */}
               <div className={styles.statusRow}>
                 <span className={`${styles.statusBadge} ${styles.attend}`}>出席 {attendMembers.length}</span>
                 <span className={`${styles.statusBadge} ${styles.late}`}>遅刻 {lateMembers.length}</span>
@@ -188,7 +202,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
               <p className={styles.meta}>欠席: {absentMembers.length > 0 ? absentMembers.join("、") : "なし"}</p>
               <p className={styles.meta}>未回答: {unansweredMembers.length > 0 ? unansweredMembers.join("、") : "なし"}</p>
 
-              {(lateMembers.length > 0 || absentMembers.length > 0 || earlyLeaveMembers.length > 0 ? (
+              {(lateMembers.length > 0 || absentMembers.length > 0 || earlyLeaveMembers.length > 0) && (
                 <div style={{ marginTop: '16px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '8px', padding: '12px' }}>
                   <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#333' }}>欠席・遅刻・早退者一覧</h3>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -224,23 +238,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
                     </tbody>
                   </table>
                 </div>
-              ) : null)}
-
-              {!isHomeCalendarMode ? (
-                <>
-                </>
-              ) : null}
-
-              {isHomeCalendarMode && !myRecord ? (
-                <p className={styles.infoTitle}>あなたはこのイベントに未回答です。</p>
-              ) : null}
-
-              <AttendanceSubmitForm
-                eventId={event.id}
-                redirectTo="/"
-                initialStatus={myRecord?.status || AttendanceStatus.ATTEND}
-                initialComment={myRecord?.comment || ""}
-              />
+              )}
 
               <Link href={`/calendar/${date}/attendance-details`} className={styles.secondaryLink}>
                 出欠詳細情報を見る
