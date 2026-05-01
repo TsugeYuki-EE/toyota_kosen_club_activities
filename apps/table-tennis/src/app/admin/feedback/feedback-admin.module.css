@@ -126,6 +126,31 @@
   font-size: 13px;
 }
 
+.completeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 14px;
+  box-sizing: border-box;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  font: inherit;
+  border-radius: 6px;
+  border: 1px solid #16a34a;
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.completeButton:hover {
+  background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+}
+
 @media (max-width: 640px) {
   .page {
     padding: 16px 10px 40px;

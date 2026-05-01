@@ -64,41 +64,105 @@ async function sendFeedbackNotificationToAdmins(args: {
 // ログイン中の部員がフィードバックを送信します。
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
-  const parsed = feedbackSubmitSchema.safeParse({
-    content: formData.get("content"),
-    redirectTo: formData.get("redirectTo") || undefined,
-  });
-
-  const redirectTo = parsed.success && parsed.data.redirectTo ? parsed.data.redirectTo : "/feedback";
+  const intent = String(formData.get("intent") || "submit");
+  const feedbackId = String(formData.get("feedbackId") || "");
+  const redirectTo = (formData.get("redirectTo") as string) || "/feedback";
   const redirectUrl = buildAppUrl(request, redirectTo);
 
-  const member = await getSessionMember();
-  if (!member) {
-    const authUrl = buildAppUrl(request, "/auth");
-    authUrl.searchParams.set("error", "ログインしてください");
-    return NextResponse.redirect(authUrl, 303);
-  }
+  // 完了ボタン処理（管理者用）
+  if (intent === "complete") {
+    const adminMember = await getAuthorizedAdminMember();
+    if (!adminMember) {
+      redirectUrl.searchParams.set("error", "unauthorized");
+      return NextResponse.redirect(redirectUrl, 303);
+    }
 
-  if (!parsed.success) {
-    redirectUrl.searchParams.set("error", parsed.error.issues[0]?.message || "入力値が不正です");
+    if (!feedbackId) {
+      redirectUrl.searchParams.set("error", "invalid-input");
+      return NextResponse.redirect(redirectUrl, 303);
+    }
+
+    const feedback = await prisma.feedback.findUnique({
+      where: { id: feedbackId },
+      select: { memberId: true, memberNameSnapshot: true, content: true },
+    });
+
+    if (!feedback) {
+      redirectUrl.searchParams.set("error", "feedback-not-found");
+      return NextResponse.redirect(redirectUrl, 303);
+    }
+
+    const sender = await prisma.member.findUnique({
+      where: { id: feedback.memberId },
+      select: { email: true, name: true },
+    });
+
+    if (sender?.email) {
+      const completeMessage = [
+        `${feedback.memberNameSnapshot} さんからフィードバックを送信していただき、ありがとうございます。`,
+        "",
+        "【フィードバック内容】",
+        feedback.content,
+        "",
+        "【実装完了のメッセージ】",
+        "フィードバックの実装が完了しました。フィードバックをありがとうございました。",
+      ].join("\n");
+
+      await sendEmail({
+        to: sender.email,
+        subject: "【卓球部】フィードバックの実装が完了しました",
+        message: completeMessage,
+      }).catch(() => {});
+    }
+
+    redirectUrl.searchParams.set("ok", "notification-sent");
     return NextResponse.redirect(redirectUrl, 303);
   }
 
-  await prisma.$executeRaw`
-    INSERT INTO "Feedback" ("id", "memberId", "memberNameSnapshot", "content", "createdAt")
-    VALUES (${crypto.randomUUID()}, ${member.id}, ${member.name}, ${parsed.data.content}, NOW())
-  `;
-
-  try {
-    await sendFeedbackNotificationToAdmins({
-      request,
-      memberName: member.name,
-      content: parsed.data.content,
+  // フィードバック送信
+  {
+    const parsed = feedbackSubmitSchema.safeParse({
+      content: formData.get("content"),
+      redirectTo: formData.get("redirectTo") || undefined,
     });
-  } catch (error) {
-    console.error("Feedback notification delivery failed", error);
-  }
 
-  redirectUrl.searchParams.set("ok", "feedback-submitted");
-  return NextResponse.redirect(redirectUrl, 303);
+    const submitRedirectTo = parsed.success && parsed.data.redirectTo ? parsed.data.redirectTo : "/feedback";
+    const submitRedirectUrl = buildAppUrl(request, submitRedirectTo);
+
+    const member = await getSessionMember();
+    if (!member) {
+      const authUrl = buildAppUrl(request, "/auth");
+      authUrl.searchParams.set("error", "ログインしてください");
+      return NextResponse.redirect(authUrl, 303);
+    }
+
+    if (!parsed.success) {
+      submitRedirectUrl.searchParams.set("error", parsed.error.issues[0]?.message || "入力値が不正です");
+      return NextResponse.redirect(submitRedirectUrl, 303);
+    }
+
+    await prisma.$executeRaw`
+      INSERT INTO "Feedback" ("id", "memberId", "memberNameSnapshot", "content", "createdAt")
+      VALUES (${crypto.randomUUID()}, ${member.id}, ${member.name}, ${parsed.data.content}, NOW())
+    `;
+
+    try {
+      await sendFeedbackNotificationToAdmins({
+        request,
+        memberName: member.name,
+        content: parsed.data.content,
+      });
+    } catch (error) {
+      console.error("Feedback notification delivery failed", error);
+    }
+
+    submitRedirectUrl.searchParams.set("ok", "feedback-submitted");
+    return NextResponse.redirect(submitRedirectUrl, 303);
+  }
+}
+
+async function getAuthorizedAdminMember() {
+  const sessionMember = await getSessionMember();
+  if (!sessionMember) return null;
+  return sessionMember;
 }
