@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "対戦相手と試合日時は必須です" }, { status: 400 });
   }
 
-  const matchDate = new Date(matchDateStr);
+  // datetime-local値をUTCとして解釈
+  const matchDate = new Date(matchDateStr + "Z");
   if (isNaN(matchDate.getTime())) {
     return NextResponse.json({ error: "試合日時が無効です" }, { status: 400 });
   }

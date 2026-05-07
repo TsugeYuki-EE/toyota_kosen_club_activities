@@ -108,25 +108,9 @@ export function FloatingMobileTabs({ monthQuery }: FloatingMobileTabsProps) {
         className={`${styles.mobileTabs} ${raised ? styles.mobileTabsRaised : ""}`.trim()}
         aria-label="メイン操作タブ"
       >
-        <Link href="/table-tennis-scores" className={styles.mobileTab}>試合結果</Link>
         <Link href="/table-tennis-notes" className={styles.mobileTab}>卓球ノート</Link>
         <Link href="/match-feedbacks" className={styles.mobileTab}>試合振り返り</Link>
-        <button
-          type="button"
-          className={`${styles.mobileTab} ${timerState ? styles.timerTabActive : ""}`.trim()}
-          aria-haspopup="dialog"
-          aria-expanded={isTimerSheetOpen}
-          onClick={() => setIsTimerSheetOpen(true)}
-        >
-          <span className={styles.mobileTabLabel}>タイマー</span>
-          <span className={styles.timerTabValue}>
-            {timerState ? (
-              <span>{formatDuration(currentTimerDisplaySeconds)}</span>
-            ) : (
-              <span>選択</span>
-            )}
-          </span>
-        </button>
+        <Link href="/table-tennis-scores" className={styles.mobileTab}>試合結果</Link>
         <Link href={`/self/profile${monthQuery}`} className={styles.mobileTab}>プロフィール</Link>
       </nav>
 

@@ -825,6 +825,191 @@
   color: #587184;
 }
 
+/* 試合結果入力ページ用スタイル */
+.formGroup {
+  display: grid;
+  gap: 6px;
+}
+
+.formGroup .label {
+  color: #4a3f42;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.formGroup .input {
+  font: inherit;
+  border: 1px solid #c8b4b9;
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+  width: 100%;
+}
+
+.formGroup .input:focus {
+  outline: none;
+  border-color: #be1026;
+  box-shadow: 0 0 0 2px rgba(190, 16, 38, 0.12);
+}
+
+.formGroup .textarea {
+  font: inherit;
+  border: 1px solid #c8b4b9;
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+  width: 100%;
+  resize: vertical;
+}
+
+.formGroup .textarea:focus {
+  outline: none;
+  border-color: #be1026;
+  box-shadow: 0 0 0 2px rgba(190, 16, 38, 0.12);
+}
+
+.sectionTitle {
+  color: #181516;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+}
+
+.setCard {
+  background: #fafbfc;
+  border: 1px solid #e4d6da;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.setLabel {
+  color: #181516;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.scoreInput {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 100px;
+}
+
+.scoreSeparator {
+  color: #6a585d;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.winnerBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #daf4e3;
+  color: #1e6b37;
+}
+
+/* セット勝敗表示 */
+.setResultBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f0f9ff;
+  border: 1px solid #bde0ed;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.setResultLabel {
+  color: #181516;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.setResultScore {
+  color: #be1026;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: 1px solid #181516;
+  background: #181516;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: #be1026;
+  border-color: #be1026;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1px solid #c8b4b9;
+  color: #181516;
+  background: #ffffff;
+  text-decoration: none;
+}
+
+.secondaryLink:hover {
+  background: #f7f7f7;
+  border-color: #be1026;
+  color: #be1026;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.header h1 {
+  color: #181516;
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.header p {
+  color: #4a3f42;
+  line-height: 1.6;
+}
+
 .mobileTabs {
   position: fixed;
   left: 50%;
@@ -1343,6 +1528,105 @@
 
 .summaryLink:hover {
   text-decoration: underline;
+}
+
+/* 試合結果一覧用スタイル */
+.scoresListWrap {
+  overflow-y: auto;
+  max-height: 500px;
+  border: 1px solid #e4d6da;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.scoresList {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.scoreItem {
+  border: 1px solid #e9dfe3;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fafbfc;
+  display: grid;
+  gap: 8px;
+}
+
+.scoreItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scoreOpponent {
+  color: #181516;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.scoreOpponent:hover {
+  color: #be1026;
+  text-decoration: underline;
+}
+
+.scoreDate {
+  color: #6a585d;
+  font-size: 13px;
+}
+
+.scoreSetCount {
+  color: #be1026;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scoreDetailLink {
+  color: #145a86;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.scoreDetailLink:hover {
+  text-decoration: underline;
+  color: #0f4668;
+}
+
+/* 編集ページ用スタイル */
+.deleteForm {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: 1px solid #c62b2b;
+  background: #d73939;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  background: #c62b2b;
+  border-color: #a11f1f;
+}
+
+.empty {
+  color: #587184;
+  padding: 20px;
+  text-align: center;
 }
 
 @media (max-width: 860px) {

@@ -20,11 +20,22 @@ export default async function TableTennisScoresPage() {
     orderBy: { matchDate: "desc" },
   });
 
+  // 勝敗数を計算
+  const calcSetRecord = (entries: any[]) => {
+    let our = 0;
+    let their = 0;
+    for (const entry of entries) {
+      if (entry.winner === "OUR") our++;
+      else if (entry.winner === "OPPONENT") their++;
+    }
+    return { our, their };
+  };
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
         <h1>試合結果入力</h1>
-        <p>5セット分の試合結果とコメントを入力できます。</p>
+        <p>卓球の試合結果を入力・確認できます。</p>
       </header>
 
       <nav className={styles.nav}>
@@ -38,31 +49,31 @@ export default async function TableTennisScoresPage() {
           {sheets.length === 0 ? (
             <p className={styles.empty}>まだ試合結果が登録されていません。</p>
           ) : (
-            <ul className={styles.list}>
-              {sheets.map((sheet) => (
-                <li key={sheet.id} className={styles.item}>
-                  <div className={styles.meta}>
-                    <span>対戦: {sheet.opponent}</span>
-                    <span>日時: <LocalDateTime value={sheet.matchDate} /></span>
-                  </div>
-                  {sheet.comment ? <p className={styles.content}>{sheet.comment}</p> : null}
-                  <ul className={styles.entryList}>
-                    {sheet.entries.map((entry) => (
-                      <li key={entry.id} className={styles.entryItem}>
-                        <span className={styles.setLabel}>第{entry.setNumber}セット</span>
-                        <span className={styles.score}>
-                          {entry.ourScore} - {entry.theirScore}
-                          {entry.winner ? ` (${entry.winner === "OUR" ? "勝ち" : "負け"})` : ""}
+            <div className={styles.scoresListWrap}>
+              <ul className={styles.scoresList}>
+                {sheets.map((sheet) => {
+                  const record = calcSetRecord(sheet.entries);
+                  return (
+                    <li key={sheet.id} className={styles.scoreItem}>
+                      <div className={styles.scoreItemHeader}>
+                        <Link href={`/table-tennis-scores/${sheet.id}`} className={styles.scoreOpponent}>
+                          {sheet.opponent}
+                        </Link>
+                        <span className={styles.scoreDate}>
+                          <LocalDateTime value={sheet.matchDate} />
                         </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href={`/table-tennis-scores/${sheet.id}`} className={styles.secondaryLink}>
-                    詳細を見る
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                      </div>
+                      <div className={styles.scoreSetCount}>
+                        {record.our}-{record.their}
+                      </div>
+                      <Link href={`/table-tennis-scores/${sheet.id}`} className={styles.scoreDetailLink}>
+                        詳細を見る →
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
         </article>
       </section>

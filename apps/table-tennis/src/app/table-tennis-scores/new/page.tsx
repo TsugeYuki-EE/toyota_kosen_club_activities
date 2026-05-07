@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useReducer, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/app/home-dashboard.module.css";
 
@@ -11,33 +11,72 @@ interface SetScore {
   comment: string;
 }
 
+type SetsState = SetScore[];
+
+function updateSet(state: SetsState, action: { index: number; field: keyof SetScore; value: string }): SetsState {
+  const newState = state.map((set, i) => {
+    if (i !== action.index) return set;
+    
+    const updated = { ...set, [action.field]: action.value };
+    
+    // winnerを自動更新
+    if (action.field === "ourScore" || action.field === "theirScore") {
+      const our = parseInt(updated.ourScore) || 0;
+      const their = parseInt(updated.theirScore) || 0;
+      updated.winner = our > their ? "OUR" : our < their ? "OPPONENT" : "";
+    }
+    
+    return updated;
+  });
+  return newState;
+}
+
+function calcSetRecord(sets: SetsState): { our: number; their: number } {
+  let our = 0;
+  let their = 0;
+  for (const set of sets) {
+    if (set.winner === "OUR") our++;
+    else if (set.winner === "OPPONENT") their++;
+  }
+  return { our, their };
+}
+
+// 1セット以上が入力されているセットのみを表示
+function hasActiveSet(set: SetScore): boolean {
+  return !!(set.ourScore || set.theirScore || set.comment);
+}
+
+const INITIAL_SETS: SetsState = Array.from({ length: 5 }, () => ({
+  ourScore: "",
+  theirScore: "",
+  winner: "",
+  comment: "",
+}));
+
 export default function NewTableTennisScorePage() {
   const router = useRouter();
   const [opponent, setOpponent] = useState("");
   const [matchDate, setMatchDate] = useState("");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sets] = useState<SetScore[]>(
-    Array.from({ length: 5 }, () => ({ ourScore: "", theirScore: "", winner: "", comment: "" }))
-  );
+  const [sets, dispatch] = useReducer(updateSet, INITIAL_SETS);
 
-  const handleSetChange = (index: number, field: keyof SetScore, value: string) => {
-    const newSets = [...sets];
-    newSets[index] = { ...newSets[index], [field]: value };
-    
-    // winnerを自動更新
-    if (field === "ourScore" || field === "theirScore") {
-      const our = parseInt(newSets[index].ourScore) || 0;
-      const their = parseInt(newSets[index].theirScore) || 0;
-      newSets[index].winner = our > their ? "OUR" : our < their ? "OPPONENT" : "";
-    }
-    
-    sets[index] = newSets[index];
-  };
+  const setRecord = useMemo(() => calcSetRecord(sets), [sets]);
+
+  // セット数を管理するstate
+  const [setCount, setSetCount] = useState(1);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // 少なくとも1セットが入力されているかチェック
+    const activeCount = sets.slice(0, setCount).filter(s => s.ourScore || s.theirScore || s.comment).length;
+    if (activeCount === 0) {
+      alert("少なくとも1セットのスコアを入力してください。");
+      setLoading(false);
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -74,100 +113,124 @@ export default function NewTableTennisScorePage() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1>新しい試合結果</h1>
+        <p>セットスコアを入力してください。（1セット以上の入力で提出できます）</p>
       </header>
 
       <nav className={styles.nav}>
         <a href="/table-tennis-scores" className={styles.secondaryLink}>試合結果一覧へ戻る</a>
       </nav>
 
-      <section className={styles.card}>
-        <form onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>対戦相手</label>
-            <input
-              type="text"
-              className={styles.input}
-              value={opponent}
-              onChange={(e) => setOpponent(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>試合日時</label>
-            <input
-              type="datetime-local"
-              className={styles.input}
-              value={matchDate}
-              onChange={(e) => setMatchDate(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>コメント</label>
-            <textarea
-              className={styles.textarea}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <h3 className={styles.sectionTitle}>各セットのスコア</h3>
-
-          {sets.map((set, index) => (
-            <div key={index} className={styles.setCard}>
-              <h4 className={styles.setLabel}>第{index + 1}セット</h4>
-              
-              <div className={styles.scoreRow}>
-                <div className={styles.scoreInput}>
-                  <label className={styles.label}>私たち</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={set.ourScore}
-                    onChange={(e) => handleSetChange(index, "ourScore", e.target.value)}
-                    min="0"
-                    required
-                  />
-                </div>
-                <span className={styles.scoreSeparator}>-</span>
-                <div className={styles.scoreInput}>
-                  <label className={styles.label}>相手</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={set.theirScore}
-                    onChange={(e) => handleSetChange(index, "theirScore", e.target.value)}
-                    min="0"
-                    required
-                  />
-                </div>
-                {set.winner && (
-                  <span className={`${styles.winnerBadge} ${set.winner === "OUR" ? styles.ourWin : styles.oppWin}`}>
-                    {set.winner === "OUR" ? "私たちの勝ち" : "相手の勝ち"}
-                  </span>
-                )}
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>コメント</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={set.comment}
-                  onChange={(e) => handleSetChange(index, "comment", e.target.value)}
-                  placeholder="セットのコメント（任意）"
-                />
-              </div>
+      <section className={styles.grid}>
+        <article className={styles.card}>
+          <form onSubmit={handleSubmit}>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>対戦相手</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={opponent}
+                onChange={(e) => setOpponent(e.target.value)}
+                required
+              />
             </div>
-          ))}
 
-          <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? "送信中..." : "提出"}
-          </button>
-        </form>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>試合日時</label>
+              <input
+                type="datetime-local"
+                className={styles.input}
+                value={matchDate}
+                onChange={(e) => setMatchDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label}>コメント</label>
+              <textarea
+                className={styles.textarea}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <h3 className={styles.sectionTitle}>各セットのスコア</h3>
+
+            {/* セット勝敗表示 */}
+            <div className={styles.setResultBar}>
+              <span className={styles.setResultLabel}>私たちの勝敗</span>
+              <span className={styles.setResultScore}>{setRecord.our} 対 {setRecord.their}</span>
+            </div>
+
+            {sets.slice(0, setCount).map((set, index) => {
+              return (
+                <div key={index} className={styles.setCard}>
+                  <h4 className={styles.setLabel}>第{index + 1}セット</h4>
+                  
+                  <div className={styles.scoreRow}>
+                    <div className={styles.scoreInput}>
+                      <label className={styles.label}>私たち</label>
+                      <input
+                        type="number"
+                        className={styles.input}
+                        value={set.ourScore}
+                        onChange={(e) => dispatch({ index, field: "ourScore" as keyof SetScore, value: e.target.value })}
+                        min="0"
+                        max="30"
+                        placeholder="空でも可"
+                      />
+                    </div>
+                    <span className={styles.scoreSeparator}>-</span>
+                    <div className={styles.scoreInput}>
+                      <label className={styles.label}>相手</label>
+                      <input
+                        type="number"
+                        className={styles.input}
+                        value={set.theirScore}
+                        onChange={(e) => dispatch({ index, field: "theirScore" as keyof SetScore, value: e.target.value })}
+                        min="0"
+                        max="30"
+                        placeholder="空でも可"
+                      />
+                    </div>
+                    {set.winner && (
+                      <span className={styles.winnerBadge}>
+                        {set.winner === "OUR" ? "私たちの勝ち" : "相手の勝ち"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>セットコメント（任意）</label>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      value={set.comment}
+                      onChange={(e) => dispatch({ index, field: "comment" as keyof SetScore, value: e.target.value })}
+                      placeholder="セットのコメント"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* セット数増やすボタン */}
+            {setCount < 5 && (
+              <button
+                type="button"
+                className={styles.secondaryLink}
+                onClick={() => setSetCount(prev => prev + 1)}
+              >
+                + セットを追加
+              </button>
+            )}
+
+            <button type="submit" className={styles.button} disabled={loading}>
+              {loading ? "送信中..." : "提出"}
+            </button>
+          </form>
+        </article>
       </section>
     </main>
   );
