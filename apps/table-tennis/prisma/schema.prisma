@@ -69,6 +69,7 @@ model Member {
   matchFeedbacks      MatchFeedback[]
   tableTennisNotes    TableTennisNote[]
   clubTasksCreated    ClubTask[]         @relation("ClubTasksCreatedBy")
+  scoreSheets         TableTennisScoreSheet[] @relation("ScoreSheetsByMember")
 }
 
 /// 毎朝 admin に送るラズパイ状態レポートの送信履歴です。
@@ -344,6 +345,37 @@ model TableTennisNote {
 
   @@unique([memberId, noteDateKey])
   @@index([memberId, noteDateKey])
+}
+
+/// 卓球スコアシート（複数作成可能）。
+model TableTennisScoreSheet {
+  id            String              @id @default(cuid())
+  memberId      String
+  opponent      String
+  matchDate     DateTime
+  comment       String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  member        Member              @relation("ScoreSheetsByMember", fields: [memberId], references: [id], onDelete: Cascade)
+  entries       MatchScoreEntry[]
+
+  @@index([memberId, matchDate])
+}
+
+/// 各セットのスコア記録です。
+model MatchScoreEntry {
+  id              String      @id @default(cuid())
+  scoreSheetId    String
+  setNumber       Int         // 1-5
+  ourScore        Int
+  theirScore      Int
+  winner          String?     // "OUR" or "OPPONENT"
+  comment         String?
+  createdAt       DateTime    @default(now())
+  scoreSheet      TableTennisScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
+
+  @@unique([scoreSheetId, setNumber])
+  @@index([scoreSheetId])
 }
 
 /// 管理者が期間指定で表示する通達メッセージです。

@@ -131,6 +131,15 @@ export default async function MatchFeedbackDetailPage({ params, searchParams }: 
           ) : null}
         </section>
 
+        {member?.canAccessAdmin ? (
+          <section className={styles.card}>
+            <h2>管理者用</h2>
+            <Link href={`/match-feedbacks/${event.id}/responses`} className={styles.button}>
+              回答者の振り返りを見る
+            </Link>
+          </section>
+        ) : null}
+
         <section className={styles.feedbackSection}>
           <Link href="/match-feedbacks" className={styles.secondary}>試合一覧へ戻る</Link>
         </section>
