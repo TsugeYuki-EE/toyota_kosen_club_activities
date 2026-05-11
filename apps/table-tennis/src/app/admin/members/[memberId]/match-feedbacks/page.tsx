@@ -83,7 +83,7 @@ export default async function AdminMemberMatchFeedbacksPage({ params }: PageProp
                 <strong>{feedback.event.title}</strong>
                 {" / "}
                 <LocalDateTimeRange startValue={feedback.event.scheduledAt} endValue={feedback.event.endAt} />
-                {feedback.event.matchOpponent ? ` / vs ${feedback.event.matchOpponent}` : ""}
+                {feedback.event.matchOpponent ? ` / ${feedback.event.matchOpponent}` : ""}
                 <p style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{feedback.feedback}</p>
               </li>
             ))}

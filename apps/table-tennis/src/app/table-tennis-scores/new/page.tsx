@@ -3,6 +3,7 @@
 import { useState, useReducer, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/app/home-dashboard.module.css";
+import { toDateTimeLocalValue, nowInJst } from "@/lib/date-format";
 
 interface SetScore {
   ourScore: string;
@@ -41,11 +42,6 @@ function calcSetRecord(sets: SetsState): { our: number; their: number } {
   return { our, their };
 }
 
-// 1セット以上が入力されているセットのみを表示
-function hasActiveSet(set: SetScore): boolean {
-  return !!(set.ourScore || set.theirScore || set.comment);
-}
-
 const INITIAL_SETS: SetsState = Array.from({ length: 5 }, () => ({
   ourScore: "",
   theirScore: "",
@@ -56,21 +52,21 @@ const INITIAL_SETS: SetsState = Array.from({ length: 5 }, () => ({
 export default function NewTableTennisScorePage() {
   const router = useRouter();
   const [opponent, setOpponent] = useState("");
-  const [matchDate, setMatchDate] = useState("");
+  const [matchDate, setMatchDate] = useState(() => {
+    return toDateTimeLocalValue(nowInJst());
+  });
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [sets, dispatch] = useReducer(updateSet, INITIAL_SETS);
 
-  const setRecord = useMemo(() => calcSetRecord(sets), [sets]);
-
-  // セット数を管理するstate
   const [setCount, setSetCount] = useState(1);
+
+  const setRecord = useMemo(() => calcSetRecord(sets), [sets]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // 少なくとも1セットが入力されているかチェック
     const activeCount = sets.slice(0, setCount).filter(s => s.ourScore || s.theirScore || s.comment).length;
     if (activeCount === 0) {
       alert("少なくとも1セットのスコアを入力してください。");
@@ -163,59 +159,50 @@ export default function NewTableTennisScorePage() {
               <span className={styles.setResultScore}>{setRecord.our} 対 {setRecord.their}</span>
             </div>
 
-            {sets.slice(0, setCount).map((set, index) => {
-              return (
-                <div key={index} className={styles.setCard}>
-                  <h4 className={styles.setLabel}>第{index + 1}セット</h4>
-                  
-                  <div className={styles.scoreRow}>
-                    <div className={styles.scoreInput}>
-                      <label className={styles.label}>私たち</label>
-                      <input
-                        type="number"
-                        className={styles.input}
-                        value={set.ourScore}
-                        onChange={(e) => dispatch({ index, field: "ourScore" as keyof SetScore, value: e.target.value })}
-                        min="0"
-                        max="30"
-                        placeholder="空でも可"
-                      />
-                    </div>
-                    <span className={styles.scoreSeparator}>-</span>
-                    <div className={styles.scoreInput}>
-                      <label className={styles.label}>相手</label>
-                      <input
-                        type="number"
-                        className={styles.input}
-                        value={set.theirScore}
-                        onChange={(e) => dispatch({ index, field: "theirScore" as keyof SetScore, value: e.target.value })}
-                        min="0"
-                        max="30"
-                        placeholder="空でも可"
-                      />
-                    </div>
-                    {set.winner && (
-                      <span className={styles.winnerBadge}>
-                        {set.winner === "OUR" ? "私たちの勝ち" : "相手の勝ち"}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>セットコメント（任意）</label>
-                    <input
-                      type="text"
-                      className={styles.input}
-                      value={set.comment}
-                      onChange={(e) => dispatch({ index, field: "comment" as keyof SetScore, value: e.target.value })}
-                      placeholder="セットのコメント"
-                    />
-                  </div>
+            {sets.slice(0, setCount).map((set, index) => (
+              <div key={index} className={styles.setCard}>
+                <h4 className={styles.setLabel}>第{index + 1}セット</h4>
+               
+                <div className={styles.scoreRow}>
+                  <input
+                    type="number"
+                    className={styles.scoreInput}
+                    value={set.ourScore}
+                    onChange={(e) => dispatch({ index, field: "ourScore" as keyof SetScore, value: e.target.value })}
+                    min="0"
+                    max="30"
+                    placeholder="私たちのスコア"
+                  />
+                  <span className={styles.scoreSeparator}>-</span>
+                  <input
+                    type="number"
+                    className={styles.scoreInput}
+                    value={set.theirScore}
+                    onChange={(e) => dispatch({ index, field: "theirScore" as keyof SetScore, value: e.target.value })}
+                    min="0"
+                    max="30"
+                    placeholder="相手のスコア"
+                  />
+                  {set.winner && (
+                    <span className={styles.winnerBadge}>
+                      {set.winner === "OUR" ? "私たちの勝ち" : "相手の勝ち"}
+                    </span>
+                  )}
                 </div>
-              );
-            })}
 
-            {/* セット数増やすボタン */}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>セットコメント（任意）</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={set.comment}
+                    onChange={(e) => dispatch({ index, field: "comment" as keyof SetScore, value: e.target.value })}
+                    placeholder="セットのコメント"
+                  />
+                </div>
+              </div>
+            ))}
+
             {setCount < 5 && (
               <button
                 type="button"

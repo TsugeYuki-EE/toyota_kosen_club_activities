@@ -108,7 +108,7 @@ export default async function AdminEventFeedbacksPage({ params, searchParams }: 
         <h1>試合振り返り一覧</h1>
         <p>
           {event.title}
-          {event.matchOpponent ? ` / vs ${event.matchOpponent}` : ""}
+          {event.matchOpponent ? ` / ${event.matchOpponent}` : ""}
           {" / "}
           <LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} />
         </p>

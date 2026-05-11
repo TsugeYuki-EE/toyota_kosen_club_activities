@@ -76,7 +76,7 @@ export function SingleEventCreateForm({
       {eventType === AttendanceEventType.MATCH ? (
         <>
           <label>
-            対戦相手 (試合の場合)
+            試合名 (試合の場合)
             <input type="text" name="matchOpponent" placeholder="例: 豊田北高校" />
           </label>
           <label>

@@ -106,9 +106,10 @@ export default async function MatchFeedbacksPage({ searchParams }: PageProps) {
                   >
                     <div style={{ marginBottom: "12px" }}>
                       <h3 style={{ margin: "0 0 8px 0" }}>
-                        {match.title} vs {match.matchOpponent || "相手未定"}
+                        {match.title}
                       </h3>
                       <p style={{ margin: "0", fontSize: "14px", color: "#666" }}>
+                        {match.matchOpponent ? `対手: ${match.matchOpponent}` : ""}
                         <LocalDateTimeRange startValue={match.scheduledAt} endValue={match.endAt} />
                       </p>
                       {existingFeedback && (

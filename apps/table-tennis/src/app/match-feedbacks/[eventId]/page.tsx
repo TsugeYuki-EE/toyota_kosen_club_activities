@@ -62,7 +62,7 @@ export default async function MatchFeedbackDetailPage({ params, searchParams }: 
       <main className={styles.main}>
         <section className={styles.card}>
           <h1>{event.title}</h1>
-          <p>vs {event.matchOpponent || "相手未定"}</p>
+          <p>{event.matchOpponent || "相手未設定"}</p>
           <p className={styles.muted}><LocalDateTimeRange startValue={event.scheduledAt} endValue={event.endAt} /></p>
           {event.matchDetail ? <p className={styles.muted}>試合詳細: {event.matchDetail}</p> : null}
           {event.note ? <p className={styles.muted}>補足: {event.note}</p> : null}

@@ -20,13 +20,13 @@ export default async function TableTennisScoresPage() {
     orderBy: { matchDate: "desc" },
   });
 
-  // 勝敗数を計算
+  // 勝敗数を計算（データベースのスコアから直接計算）
   const calcSetRecord = (entries: any[]) => {
     let our = 0;
     let their = 0;
     for (const entry of entries) {
-      if (entry.winner === "OUR") our++;
-      else if (entry.winner === "OPPONENT") their++;
+      if (entry.ourScore > entry.theirScore) our++;
+      else if (entry.ourScore < entry.theirScore) their++;
     }
     return { our, their };
   };

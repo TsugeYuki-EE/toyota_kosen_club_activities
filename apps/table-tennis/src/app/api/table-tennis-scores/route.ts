@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionMember } from "@/lib/member-session";
+import { parseJstDateTimeInputToUtc } from "@/lib/date-format";
 
 export async function POST(request: NextRequest) {
   const member = await getSessionMember();
@@ -17,28 +18,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "対戦相手と試合日時は必須です" }, { status: 400 });
   }
 
-  // datetime-local値をUTCとして解釈
-  const matchDate = new Date(matchDateStr + "Z");
+  // datetime-local値をJST として UTC Date に変換
+  const matchDate = parseJstDateTimeInputToUtc(matchDateStr);
   if (isNaN(matchDate.getTime())) {
     return NextResponse.json({ error: "試合日時が無効です" }, { status: 400 });
   }
 
-  // 5セットのスコアを取得
-  const entries = [];
-  for (let i = 1; i <= 5; i++) {
-    const ourScore = parseInt(String(formData.get(`set_${i}_ourScore`) || "0"));
-    const theirScore = parseInt(String(formData.get(`set_${i}_theirScore`) || "0"));
-    const winner = String(formData.get(`set_${i}_winner`) || "");
-    const setComment = String(formData.get(`set_${i}_comment`) || "");
+   // 5セットのスコアを取得
+   const entries = [];
+   for (let i = 1; i <= 5; i++) {
+     const ourScore = parseInt(String(formData.get(`set_${i}_ourScore`) || "0"));
+     const theirScore = parseInt(String(formData.get(`set_${i}_theirScore`) || "0"));
+     const winner = String(formData.get(`set_${i}_winner`) || "");
+     const setComment = String(formData.get(`set_${i}_comment`) || "");
 
-    entries.push({
-      setNumber: i,
-      ourScore,
-      theirScore,
-      winner: winner || null,
-      comment: setComment || null,
-    });
-  }
+     entries.push({
+       setNumber: i,
+       ourScore,
+       theirScore,
+       winner: winner || null,
+       comment: setComment || null,
+     });
+   }
 
   const scoreSheet = await prisma.tableTennisScoreSheet.create({
     data: {

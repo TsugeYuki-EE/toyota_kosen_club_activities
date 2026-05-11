@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionMember } from "@/lib/member-session";
+import { parseJstDateTimeInputToUtc } from "@/lib/date-format";
 
 export async function POST(
   request: NextRequest,
@@ -37,29 +38,28 @@ export async function POST(
       where: { scoreSheetId: sheetId },
     });
 
-    // 新しいエントリを生成
+    // 新しいエントリを生成（winnerフィールドも保存）
     const createPromises = entries.map((entry: any) => {
-      const winner = entry.ourScore > entry.theirScore ? "OUR" : entry.ourScore < entry.theirScore ? "OPPONENT" : "";
-
       return prisma.matchScoreEntry.create({
         data: {
           scoreSheetId: sheetId,
           setNumber: entry.setNumber,
           ourScore: entry.ourScore,
           theirScore: entry.theirScore,
-          winner,
+          winner: entry.winner || null,
           comment: entry.comment || null,
         },
       });
     });
 
     // シートとエントリを同時に作成
+    const parsedMatchDate = parseJstDateTimeInputToUtc(matchDate);
     const [sheet] = await Promise.all([
       prisma.tableTennisScoreSheet.update({
         where: { id: sheetId },
         data: {
           opponent,
-           matchDate: new Date(matchDate + "Z"),
+           matchDate: parsedMatchDate,
           comment,
         },
       }),
