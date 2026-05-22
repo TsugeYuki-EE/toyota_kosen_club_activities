@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
   const redirectTo = String(formData.get("redirectTo") || "/table-tennis-notes");
   const redirectUrl = buildAppUrl(request, redirectTo);
   const intent = String(formData.get("intent") || "save");
+  const noteId = String(formData.get("noteId") || "");
   const noteDateKey = String(formData.get("noteDateKey") || "");
   const content = String(formData.get("content") || "").trim();
 
@@ -29,12 +30,21 @@ export async function POST(request: NextRequest) {
 
   try {
     if (intent === "delete") {
-      await prisma.tableTennisNote.deleteMany({
-        where: {
-          memberId: member.id,
-          noteDateKey,
-        },
-      });
+      if (noteId) {
+        await prisma.tableTennisNote.deleteMany({
+          where: {
+            id: noteId,
+            memberId: member.id,
+          },
+        });
+      } else {
+        await prisma.tableTennisNote.deleteMany({
+          where: {
+            memberId: member.id,
+            noteDateKey,
+          },
+        });
+      }
       redirectUrl.searchParams.set("ok", "deleted");
       return NextResponse.redirect(redirectUrl, 303);
     }
@@ -44,34 +54,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(redirectUrl, 303);
     }
 
-    const existed = await prisma.tableTennisNote.findUnique({
-      where: {
-        memberId_noteDateKey: {
+    if (noteId) {
+      const result = await prisma.tableTennisNote.updateMany({
+        where: {
+          id: noteId,
           memberId: member.id,
+        },
+        data: {
+          content,
           noteDateKey,
         },
-      },
-      select: { id: true },
-    });
+      });
 
-    await prisma.tableTennisNote.upsert({
-      where: {
-        memberId_noteDateKey: {
-          memberId: member.id,
-          noteDateKey,
-        },
-      },
-      update: {
-        content,
-      },
-      create: {
+      if (result.count === 0) {
+        redirectUrl.searchParams.set("error", "not-found");
+        return NextResponse.redirect(redirectUrl, 303);
+      }
+
+      redirectUrl.searchParams.set("ok", "updated");
+      return NextResponse.redirect(redirectUrl, 303);
+    }
+
+    await prisma.tableTennisNote.create({
+      data: {
         memberId: member.id,
         noteDateKey,
         content,
       },
     });
 
-    redirectUrl.searchParams.set("ok", existed ? "updated" : "created");
+    redirectUrl.searchParams.set("ok", "created");
     return NextResponse.redirect(redirectUrl, 303);
   } catch (error) {
     console.error("Failed to save table tennis note", error);

@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS "TableTennisNote" (
   CONSTRAINT "TableTennisNote_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "Member"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "TableTennisNote_memberId_noteDateKey_key"
-  ON "TableTennisNote"("memberId", "noteDateKey");
-
 CREATE INDEX IF NOT EXISTS "TableTennisNote_memberId_noteDateKey_idx"
   ON "TableTennisNote"("memberId", "noteDateKey");
+
+CREATE INDEX IF NOT EXISTS "TableTennisNote_memberId_createdAt_idx"
+  ON "TableTennisNote"("memberId", "createdAt");

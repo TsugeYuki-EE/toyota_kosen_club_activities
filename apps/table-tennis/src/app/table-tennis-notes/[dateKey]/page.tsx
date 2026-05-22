@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { LocalDateTime } from "@/components/local-date-time";
 import { getSessionMember } from "@/lib/member-session";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/home-dashboard.module.css";
@@ -28,13 +29,12 @@ export default async function TableTennisNoteDetailPage({ params, searchParams }
     redirect("/auth");
   }
 
-  const note = await prisma.tableTennisNote.findUnique({
+  const note = await prisma.tableTennisNote.findFirst({
     where: {
-      memberId_noteDateKey: {
-        memberId: member.id,
-        noteDateKey: dateKey,
-      },
+      memberId: member.id,
+      noteDateKey: dateKey,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   return (
@@ -64,9 +64,10 @@ export default async function TableTennisNoteDetailPage({ params, searchParams }
         <section className={styles.card}>
           <h2>{note ? "ノートを編集" : "ノートを入力"}</h2>
           <form action="/api/table-tennis-notes" method="post" className={styles.form}>
-            <input type="hidden" name="intent" value="save" />
+            <input type="hidden" name="intent" value={note ? "save" : "create"} />
             <input type="hidden" name="noteDateKey" value={dateKey} />
             <input type="hidden" name="redirectTo" value="/table-tennis-notes" />
+            {note ? <input type="hidden" name="noteId" value={note.id} /> : null}
             <label>
               内容
               <textarea
@@ -83,10 +84,26 @@ export default async function TableTennisNoteDetailPage({ params, searchParams }
           {note ? (
             <form action="/api/table-tennis-notes" method="post" className={styles.inlineForm}>
               <input type="hidden" name="intent" value="delete" />
+              <input type="hidden" name="noteId" value={note.id} />
               <input type="hidden" name="noteDateKey" value={dateKey} />
               <input type="hidden" name="redirectTo" value="/table-tennis-notes" />
               <button type="submit" className={styles.dangerSmall}>この日のノートを削除</button>
             </form>
+          ) : null}
+
+          {note ? (
+            <form action="/api/table-tennis-notes" method="post" className={styles.inlineForm}>
+              <input type="hidden" name="intent" value="create" />
+              <input type="hidden" name="noteDateKey" value={dateKey} />
+              <input type="hidden" name="redirectTo" value="/table-tennis-notes" />
+              <button type="submit" className={styles.secondary}>この日付で新しいノートを追加</button>
+            </form>
+          ) : null}
+
+          {note ? (
+            <p className={styles.muted} style={{ marginTop: 12 }}>
+              最終作成: <LocalDateTime value={note.createdAt} />
+            </p>
           ) : null}
         </section>
 

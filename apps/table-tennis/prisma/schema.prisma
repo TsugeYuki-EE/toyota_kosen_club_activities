@@ -333,7 +333,7 @@ model MatchFeedback {
   @@index([attendanceEventId])
 }
 
-/// 卓球ノートです。部員ごとに日付単位で1件保存します。
+/// 卓球ノートです。部員ごとに日付単位で複数件保存できます。
 model TableTennisNote {
   id          String   @id @default(cuid())
   memberId    String
@@ -343,8 +343,8 @@ model TableTennisNote {
   updatedAt   DateTime @default(now()) @updatedAt
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
-  @@unique([memberId, noteDateKey])
   @@index([memberId, noteDateKey])
+  @@index([memberId, createdAt])
 }
 
 /// 卓球スコアシート（複数作成可能）。
