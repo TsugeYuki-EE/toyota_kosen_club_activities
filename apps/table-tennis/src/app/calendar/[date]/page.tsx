@@ -76,12 +76,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
   const selectedDate = dateFromKey(date);
   const { startUtc: dayStart, endUtc: dayEnd } = getJstDayRangeFromDateKey(date);
 
-  const [players, events, matches, practiceMenus] = await Promise.all([
-    prisma.member.findMany({
-      where: { role: "PLAYER" },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
+  const [events, matches, practiceMenus] = await Promise.all([
     prisma.attendanceEvent.findMany({
       where: {
         scheduledAt: {
@@ -165,7 +160,7 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
           const earlyLeaveMembers = nonAdminRecords.filter((record) => record.status === AttendanceStatus.EARLY_LEAVE).map((record) => record.member.name);
           const absentMembers = nonAdminRecords.filter((record) => record.status === AttendanceStatus.ABSENT).map((record) => record.member.name);
           const answeredIds = new Set(nonAdminRecords.map((record) => record.memberId));
-          const unansweredMembers = players.filter((player) => !answeredIds.has(player.id)).map((player) => player.name);
+          
           const myRecord = event.records.find((record) => record.memberId === member.id);
 
           return (
@@ -198,13 +193,13 @@ export default async function CalendarDatePage({ params, searchParams }: PagePro
                 <span className={`${styles.statusBadge} ${styles.late}`}>遅刻 {lateMembers.length}</span>
                 <span className={`${styles.statusBadge} ${styles.earlyLeave}`}>早退 {earlyLeaveMembers.length}</span>
                 <span className={`${styles.statusBadge} ${styles.absent}`}>欠席 {absentMembers.length}</span>
-                <span className={`${styles.statusBadge} ${styles.unknown}`}>未回答 {unansweredMembers.length}</span>
+                
               </div>
               <p className={styles.meta}>出席: {attendMembers.length > 0 ? attendMembers.join("、") : "なし"}</p>
               <p className={styles.meta}>遅刻: {lateMembers.length > 0 ? lateMembers.join("、") : "なし"}</p>
               <p className={styles.meta}>早退: {earlyLeaveMembers.length > 0 ? earlyLeaveMembers.join("、") : "なし"}</p>
               <p className={styles.meta}>欠席: {absentMembers.length > 0 ? absentMembers.join("、") : "なし"}</p>
-              <p className={styles.meta}>未回答: {unansweredMembers.length > 0 ? unansweredMembers.join("、") : "なし"}</p>
+              
 
               {(lateMembers.length > 0 || absentMembers.length > 0 || earlyLeaveMembers.length > 0) && (
                 <div style={{ marginTop: '16px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '8px', padding: '12px' }}>
