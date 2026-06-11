@@ -426,7 +426,10 @@ def make_bar(value: float, minimum: float, maximum: float, width: int = 24) -> s
     ratio = (value - minimum) / (maximum - minimum)
     ratio = max(0.0, min(1.0, ratio))
     filled = int(round(ratio * width))
-    return "[" + ("#" * filled) + ("-" * (width - filled)) + "]"
+    # Use solid and light block characters for a denser, more graphical bar
+    filled_char = "█"
+    empty_char = "░"
+    return "[" + (filled_char * filled) + (empty_char * (width - filled)) + "]"
 
 
 def make_sparkline(values: List[float], width: int, minimum: float, maximum: float) -> str:
@@ -434,8 +437,8 @@ def make_sparkline(values: List[float], width: int, minimum: float, maximum: flo
         return ""
     if not values:
         return "." * width
-
-    palette = " .:-=+*#%@"
+    # Use a denser block-based sparkline using ascending blocks
+    palette = "▁▂▃▄▅▆▇█"
     levels = len(palette) - 1
     if maximum <= minimum:
         maximum = minimum + 1.0
@@ -587,12 +590,22 @@ def render(
         for c in containers:
             if line >= height - 1:
                 break
-            row = f"{c.name[:20]:20} {c.state[:9]:9} {c.status[:31]:31} {c.ports[:max(0, width - 66)]}"
-            attr = curses.A_NORMAL
+            # Icon and color by state: running=green dot, exited=red X, other=yellow dot
             if c.state == "running":
+                icon = "●"
                 attr = curses.color_pair(2)
             elif c.state in {"exited", "dead"}:
+                icon = "✖"
                 attr = curses.color_pair(1)
+            else:
+                icon = "●"
+                attr = curses.color_pair(3)
+
+            name_part = f"{c.name[:18]:18}"
+            state_part = f"{c.state[:9]:9}"
+            status_part = f"{c.status[:31]:31}"
+            ports_part = c.ports[: max(0, width - 66)]
+            row = f"{icon} {name_part} {state_part} {status_part} {ports_part}"
             draw_line(stdscr, line, row, width, attr)
             line += 1
 
@@ -610,6 +623,7 @@ def main(stdscr: curses.window) -> None:
         curses.use_default_colors()
         curses.init_pair(1, curses.COLOR_RED, -1)
         curses.init_pair(2, curses.COLOR_GREEN, -1)
+        curses.init_pair(3, curses.COLOR_YELLOW, -1)
 
     cpu_sampler = CpuSampler()
     net_sampler = NetSampler()
