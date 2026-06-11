@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AttendanceEventType } from "@prisma/client";
 import { z } from "zod";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
-import { addJstDays, createJstDate, getJstDateParts, getJstWeekday, parseJstDateTimeToUtc, toDateKey } from "@/lib/date-format";
+import { addJstDays, getJstDateParts, getJstWeekday, parseJstDateTimeToUtc, toDateKey } from "@/lib/date-format";
 import { isJapaneseHolidayDateKey } from "@/lib/japanese-holiday";
 import { prisma } from "@/lib/prisma";
 import { buildRedirectUrl } from "@/lib/request-utils";
@@ -12,9 +12,8 @@ const weekdayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const weekdayTimeSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "時刻の形式が不正です").optional(),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, "終了時刻の形式が不正です").optional(),
-  off: z.boolean(),
 }).superRefine((value, ctx) => {
-  if (!value.off && !value.startTime) {
+  if (!value.startTime) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "部活なしにしない曜日は開始時刻が必要です",
@@ -31,8 +30,11 @@ const weekdayTimeSchema = z.object({
 });
 
 const bulkDefaultsSchema = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "開始日が不正です"),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "終了日が不正です"),
+  eventType: z.nativeEnum(AttendanceEventType),
+  eventDates: z.string().trim().min(1, "日付を1つ以上選択してください"),
+  matchOpponent: z.string().trim().optional(),
+  matchDetail: z.string().trim().optional(),
+  note: z.string().trim().optional(),
   sun: weekdayTimeSchema,
   mon: weekdayTimeSchema,
   tue: weekdayTimeSchema,
@@ -41,11 +43,11 @@ const bulkDefaultsSchema = z.object({
   fri: weekdayTimeSchema,
   sat: weekdayTimeSchema,
 }).superRefine((value, ctx) => {
-  if (value.endDate < value.startDate) {
+  if (value.eventType === AttendanceEventType.MATCH && !value.matchOpponent) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["endDate"],
-      message: "終了日は開始日以降を指定してください",
+      path: ["matchOpponent"],
+      message: "試合を選択した場合は対戦相手を入力してください",
     });
   }
 });
@@ -54,8 +56,11 @@ function extractWeekdayTime(formData: FormData, key: (typeof weekdayKeys)[number
   return {
     startTime: (String(formData.get(`${key}StartTime`) || "").trim() || undefined),
     endTime: (String(formData.get(`${key}EndTime`) || "").trim() || undefined),
-    off: formData.get(`${key}Off`) === "1",
   };
+}
+
+function parseEventDates(rawDates: string): string[] {
+  return [...new Set(rawDates.split(",").map((value) => value.trim()).filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value)))].sort((a, b) => a.localeCompare(b));
 }
 
 export async function POST(request: NextRequest) {
@@ -68,8 +73,11 @@ export async function POST(request: NextRequest) {
   const redirectUrl = buildRedirectUrl(request, redirectTo);
 
   const parsed = bulkDefaultsSchema.safeParse({
-    startDate: formData.get("startDate"),
-    endDate: formData.get("endDate"),
+    eventType: formData.get("eventType"),
+    eventDates: formData.get("eventDates"),
+    matchOpponent: formData.get("matchOpponent") || undefined,
+    matchDetail: formData.get("matchDetail") || undefined,
+    note: formData.get("note") || undefined,
     sun: extractWeekdayTime(formData, "sun"),
     mon: extractWeekdayTime(formData, "mon"),
     tue: extractWeekdayTime(formData, "tue"),
@@ -84,19 +92,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 303);
   }
 
-  const startDateValue = parsed.data.startDate;
-  const endDateValue = parsed.data.endDate;
+  const eventDates = parseEventDates(parsed.data.eventDates);
+  if (eventDates.length === 0) {
+    redirectUrl.searchParams.set("error", "日付を1つ以上選択してください");
+    return NextResponse.redirect(redirectUrl, 303);
+  }
 
-  const startDate = parseJstDateTimeToUtc(startDateValue, "00:00");
-  const endDate = parseJstDateTimeToUtc(endDateValue, "00:00");
+  const startDate = parseJstDateTimeToUtc(eventDates[0], "00:00");
+  const endDate = parseJstDateTimeToUtc(eventDates[eventDates.length - 1], "00:00");
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    redirectUrl.searchParams.set("error", "開始日または終了日が不正です");
+    redirectUrl.searchParams.set("error", "選択された日付が不正です");
     return NextResponse.redirect(redirectUrl, 303);
   }
 
   const existingEvents = await prisma.attendanceEvent.findMany({
     where: {
-      eventType: AttendanceEventType.PRACTICE,
       scheduledAt: {
         gte: startDate,
         lt: addJstDays(endDate, 1),
@@ -119,32 +129,22 @@ export async function POST(request: NextRequest) {
     title: string;
     scheduledAt: Date;
     endAt: Date | null;
-    matchOpponent: null;
-    matchDetail: null;
-    note: null;
+    matchOpponent: string | null;
+    matchDetail: string | null;
+    note: string | null;
   }> = [];
-  let skippedByHoliday = 0;
-  let skippedByOff = 0;
   let skippedByExisting = 0;
 
-  for (let cursor = startDate; cursor.getTime() <= endDate.getTime(); cursor = addJstDays(cursor, 1)) {
-    const dateKey = toDateKey(cursor);
-    if (isJapaneseHolidayDateKey(dateKey)) {
-      skippedByHoliday += 1;
-      continue;
-    }
-
-    const weekdayIndex = getJstWeekday(cursor);
-    const weekdayKey = weekdayKeys[weekdayIndex];
+  for (const dateKey of eventDates) {
+    const cursor = parseJstDateTimeToUtc(dateKey, "00:00");
+    const weekdayKey = isJapaneseHolidayDateKey(dateKey)
+      ? "sun"
+      : weekdayKeys[getJstWeekday(cursor)];
     const weekdaySetting = parsed.data[weekdayKey];
 
-    if (weekdaySetting.off) {
-      skippedByOff += 1;
-      continue;
-    }
-
     if (!weekdaySetting.startTime) {
-      continue;
+      redirectUrl.searchParams.set("error", `${weekdayKey} の開始時刻が必要です`);
+      return NextResponse.redirect(redirectUrl, 303);
     }
 
     const scheduledAt = parseJstDateTimeToUtc(dateKey, weekdaySetting.startTime);
@@ -162,13 +162,15 @@ export async function POST(request: NextRequest) {
     existingScheduleKeys.add(scheduleKey);
 
     rows.push({
-      eventType: AttendanceEventType.PRACTICE,
-      title: `練習 ${dateKey}`,
+      eventType: parsed.data.eventType,
+      title: parsed.data.eventType === AttendanceEventType.MATCH
+        ? `試合${parsed.data.matchOpponent ? `: ${parsed.data.matchOpponent}` : ""}`
+        : `練習 ${dateKey}`,
       scheduledAt,
       endAt,
-      matchOpponent: null,
-      matchDetail: null,
-      note: null,
+      matchOpponent: parsed.data.eventType === AttendanceEventType.MATCH ? parsed.data.matchOpponent || null : null,
+      matchDetail: parsed.data.eventType === AttendanceEventType.MATCH ? parsed.data.matchDetail || null : null,
+      note: parsed.data.note || null,
     });
   }
 
@@ -178,7 +180,7 @@ export async function POST(request: NextRequest) {
 
   redirectUrl.searchParams.set(
     "ok",
-    `default-bulk-${rows.length}件作成 (祝日除外${skippedByHoliday}日 / 部活なし${skippedByOff}日 / 既存重複${skippedByExisting}件)`,
+    `bulk-${rows.length}件作成 (既存重複${skippedByExisting}件)`,
   );
   return NextResponse.redirect(redirectUrl, 303);
 }

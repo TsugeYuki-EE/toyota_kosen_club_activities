@@ -2,11 +2,29 @@
 
 import { useMemo, useState } from "react";
 import { AttendanceEventType } from "@prisma/client";
+import { WEEKDAY_DEFAULT_TIME_ROWS } from "@/lib/event-default-times";
 import styles from "./events-management.module.css";
 
 type BulkDatePickerProps = {
   defaultDate: string;
 };
+
+type WeekdayKey = (typeof WEEKDAY_DEFAULT_TIME_ROWS)[number]["key"];
+
+type WeekdaySetting = {
+  startTime: string;
+  endTime: string;
+};
+
+function createInitialWeekdaySettings(): Record<WeekdayKey, WeekdaySetting> {
+  return WEEKDAY_DEFAULT_TIME_ROWS.reduce((settings, row) => {
+    settings[row.key] = {
+      startTime: row.startTime,
+      endTime: row.endTime,
+    };
+    return settings;
+  }, {} as Record<WeekdayKey, WeekdaySetting>);
+}
 
 function nthWeekdayOfMonthUtc(year: number, month: number, weekday: number, nth: number): number {
   const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
@@ -134,6 +152,7 @@ export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
   const [eventType, setEventType] = useState<AttendanceEventType>(AttendanceEventType.PRACTICE);
   const [monthValue, setMonthValue] = useState(defaultDate.slice(0, 7));
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [weekdaySettings, setWeekdaySettings] = useState<Record<WeekdayKey, WeekdaySetting>>(createInitialWeekdaySettings);
   const todayDateValue = useMemo(() => getTodayJstDateValue(), []);
 
   const sortedSelectedDates = useMemo(
@@ -189,7 +208,7 @@ export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
   }
 
   return (
-    <form action="/api/events/bulk" method="post" className={styles.form}>
+    <form action="/api/events/bulk/defaults" method="post" className={styles.form}>
       <input type="hidden" name="eventDates" value={sortedSelectedDates.join(",")} />
       <input type="hidden" name="redirectTo" value="/admin/events" />
 
@@ -305,15 +324,60 @@ export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
         </div>
       </div>
 
-      <label>
-        時刻 (5分単位)
-        <input type="time" name="eventTime" step={300} defaultValue="19:00" required />
-      </label>
+      <div className={styles.weekdayTemplateWrap}>
+        <p className={styles.meta}>選択した日付の曜日に応じて、開始・終了時刻または部活なしを設定してください。</p>
+        <table className={styles.weekdayTemplateTable}>
+          <thead>
+            <tr>
+              <th>曜日</th>
+              <th>開始時刻</th>
+              <th>終了時刻 (任意)</th>
+              <th>部活なし</th>
+            </tr>
+          </thead>
+          <tbody>
+            {WEEKDAY_DEFAULT_TIME_ROWS.map((row) => {
+              const currentSetting = weekdaySettings[row.key];
 
-      <label>
-        終了時刻 (任意・5分単位)
-        <input type="time" name="eventEndTime" step={300} />
-      </label>
+              return (
+                <tr key={row.key}>
+                  <td>{row.label}</td>
+                  <td>
+                    <input
+                      type="time"
+                      name={`${row.key}StartTime`}
+                      step={300}
+                      value={currentSetting.startTime}
+                      onChange={(event) => setWeekdaySettings((current) => ({
+                        ...current,
+                        [row.key]: {
+                          ...current[row.key],
+                          startTime: event.currentTarget.value,
+                        },
+                      }))}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="time"
+                      name={`${row.key}EndTime`}
+                      step={300}
+                      value={currentSetting.endTime}
+                      onChange={(event) => setWeekdaySettings((current) => ({
+                        ...current,
+                        [row.key]: {
+                          ...current[row.key],
+                          endTime: event.currentTarget.value,
+                        },
+                      }))}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       {eventType === AttendanceEventType.MATCH ? (
         <>

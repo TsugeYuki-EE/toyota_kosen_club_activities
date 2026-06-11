@@ -30,7 +30,7 @@ export default async function BulkEventCreatePage() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1>複数予定作成</h1>
-        <p>カレンダーから複数日を選択し、同じ時刻でまとめて作成できます。</p>
+        <p>カレンダーで日付を選び、曜日ごとの時刻を設定してまとめて作成します。</p>
         <div className={styles.topLinks}>
           <Link className={styles.linkButton} href="/admin/events">
             予定管理へ戻る
@@ -43,11 +43,6 @@ export default async function BulkEventCreatePage() {
 
       <section className={styles.card}>
         <h2>入力フォーム</h2>
-        <div className={styles.inlineRow}>
-          <Link className={styles.secondaryLink} href="/admin/events/bulk/defaults">
-            デフォルト入力で一括作成へ
-          </Link>
-        </div>
         <BulkDatePicker defaultDate={defaultDate} />
       </section>
     </main>
