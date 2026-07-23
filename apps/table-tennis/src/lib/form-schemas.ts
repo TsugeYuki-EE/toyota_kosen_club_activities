@@ -133,6 +133,7 @@ export const practiceMenuSchema = z.object({
 export const clubTaskSchema = z.object({
   title: z.string().trim().min(1, "タスク名は必須です").max(100, "タスク名は100文字以内で入力してください"),
   deadlineOn: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "締め切り日を選択してください"),
+  notificationDaysBefore: z.coerce.number().int().min(1, "1日以上で指定してください").max(30, "最大30日まで指定できます").optional().default(14),
 });
 
 // 部活タスク更新フォームです。
