@@ -8,6 +8,7 @@
 - `apps/table-tennis`: 卓球アプリ
 - `gateway/server.cjs`: 部活選択画面と内部プロキシ
 - `docker-compose.yml`: 統合起動設定
+- `docker-compose.tunnel.yml`: Cloudflare Tunnel設定
 
 ## 仕様
 
@@ -49,13 +50,400 @@
   docker compose --profile backup up -d
   ```
 
-## 外部DBを使わない運用
+## Dockerイメージの公開（GitHub Container Registry）
 
-この統合構成はローカル PostgreSQL コンテナを前提にしています。
+デプロイ時間を短縮するために、DockerイメージをGitHub Container Registry (GHCR) に公開することを推奨します。
 
-- ゲートウェイ内部で接続先をローカルDB固定にしています
-- 外部DB接続が不要な運用にできます
-- `apps/handball/.env` と `apps/table-tennis/.env` もローカル接続先に変更済み
+### GitHub Personal Access Tokenの作成
+
+1. [GitHub設定ページ](https://github.com/settings/tokens) にアクセス
+2. "Fine-grained tokens" → "Generate new token"
+3. 設定:
+   - Token name: `ghcr-access`
+   - Expiration: 選択
+   - Permissions:
+     - `Contents`: `Read and write`
+   - Repository access: `Only select repositories` → `toyota_kosen_club_activities`
+4. "Generate token" をクリック
+5. 表示されたトークンをコピーして安全な場所に保存
+
+### Dockerイメージのビルドとpush
+
+```bash
+# GitHubにログイン
+echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# イメージをビルド
+docker build -t ghcr.io/YOUR_GITHUB_USERNAME/toyota-kosen-club:latest .
+
+# push
+docker push ghcr.io/YOUR_GITHUB_USERNAME/toyota-kosen-club:latest
+```
+
+### サーバーでのpullと起動
+
+```bash
+# GitHubからログイン
+echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# イメージをpull
+docker pull ghcr.io/YOUR_GITHUB_USERNAME/toyota-kosen-club:latest
+
+# docker-compose.yml を編集（buildをimageに変更）
+# 変更前:
+#   app:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+# 変更後:
+#   app:
+#     image: ghcr.io/YOUR_GITHUB_USERNAME/toyota-kosen-club:latest
+```
+
+### GitHub Secretsへの登録（任意）
+
+CI/CDで自動デプロイする場合:
+1. リポジトリ設定 → Secrets and variables → Actions
+2. "New repository secret" をクリック
+3. 名前: `GHCR_TOKEN`、値: Personal Access Token
+4. Docker pushスクリプトから使用
+
+### 自動ビルド・pushスクリプト（任意）
+
+ローカルから直接pushする場合のスクリプト例:
+
+```bash
+#!/bin/bash
+# push-to-ghcr.sh - このスクリプトをexecutableにして使用
+
+GITHUB_USERNAME="YOUR_GITHUB_USERNAME"
+REPO_NAME="toyota_kosen_club_activities"
+IMAGE_TAG="toyota-kosen-club:latest"
+
+# GitHubにログイン
+echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
+
+# ビルド
+docker build -t ghcr.io/$GITHUB_USERNAME/$IMAGE_TAG .
+
+# Push
+docker push ghcr.io/$GITHUB_USERNAME/$IMAGE_TAG
+
+# ログアウト
+docker logout ghcr.io
+```
+
+## サーバーへのSSH接続
+
+デプロイ先サーバーへのSSH接続方法を説明します。
+
+### SSHキーの生成（初回のみ）
+
+ローカルマシンで以下を実行してSSHキーを生成:
+
+```bash
+# SSHキーの生成
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# 公開キーを表示
+cat ~/.ssh/id_ed25519.pub
+```
+
+生成された公開キー（`ssh-ed25519...`で始まる文字列）をサーバーの`~/.ssh/authorized_keys`に追加します。
+
+### サーバーへの接続
+
+```bash
+# SSHで接続
+ssh user@SERVER_IP
+
+# ポート指定がある場合
+ssh -p PORT user@SERVER_IP
+
+# SSHキーを使用する場合
+ssh -i ~/.ssh/id_ed25519 user@SERVER_IP
+```
+
+### 一般的なSSH接続例
+
+```bash
+# 通常接続
+ssh club@192.168.1.100
+
+# Raspberry Piの場合（デフォルトユーザー: pi）
+ssh pi@192.168.1.50
+
+# ドメイン指定の場合
+ssh user@your-server.example.com
+```
+
+### SSH接続後の初期設定
+
+サーバーに接続後、初回に以下を実行:
+
+```bash
+# システム更新
+sudo apt update && sudo apt upgrade -y
+
+# Dockerインストール（未インストールの場合）
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# Gitインストール（未インストールの場合）
+sudo apt install -y git
+
+# 新しいグループメンバーシップを有効化
+newgrp docker
+```
+
+### SSH接続の便利設定
+
+`~/.ssh/config` に以下を記述して接続を簡略化:
+
+```
+Host toyota-kosen
+    HostName 192.168.1.100
+    User club
+    IdentityFile ~/.ssh/id_ed25519
+    Port 22
+
+Host pi-server
+    HostName 192.168.1.50
+    User pi
+    IdentityFile ~/.ssh/id_ed25519
+```
+
+設定後、`ssh toyota-kosen` で接続可能。
+
+## ドメイン公開（Cloudflare Tunnel）
+
+このプロジェクトは、Cloudflare Tunnelを使用してドメインで公開することを前提としています。
+
+### 事前準備
+
+1. **Cloudflareアカウントの準備**
+   - [Cloudflare Zero Trust](https://one.cloudflare.com/) にログイン
+   - ドメインをCloudflareで設定済みであること
+
+2. **Tunnelトークンの取得**
+   - Cloudflare Zero Trustダッシュボード → Networks → Tunnels
+   - "Create a tunnel" → "Connector method" を選択
+   - 表示されるJSONトークンをコピーして保存
+
+### デプロイ手順
+
+#### ステップ1: サーバーの準備
+
+Linuxサーバー（Ubuntu 22.04推奨）に以下をインストール：
+
+```bash
+# DockerとDocker Composeのインストール
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Gitのインストール（コード取得用）
+sudo apt install -y git
+```
+
+#### ステップ2: プロジェクトの取得
+
+```bash
+cd /opt
+git clone git@github.com:TsugeYuki-EE/toyota_kosen_club_activities.git
+cd toyota_kosen_club_activities
+```
+
+#### ステップ3: 環境変数の設定
+
+```bash
+# サンプルファイルをコピー
+cp .env.example .env.tunnel
+
+# 環境変数を編集
+nano .env.tunnel
+```
+
+`.env.tunnel` の設定項目:
+
+```env
+# === Cloudflare Tunnel ===
+# Cloudflare Tunnelで取得したトークンを設定
+CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoi...（長いJSON文字列）
+
+# 公開するドメインを指定（httpsから開始）
+PUBLIC_BASE_URL=https://your-domain.example.com
+
+# HTTPS強制を有効化
+FORCE_HTTPS=true
+
+# 初回デプロイ時はtrue、2回目以降はfalseでも可
+RUN_DB_MIGRATIONS=true
+
+# === PostgreSQL ===
+POSTGRES_USER=club
+POSTGRES_PASSWORD=強力なパスワードを設定
+
+# === 管理画面用キー ===
+# ランダムな文字列を設定（少なくとも32文字）
+HANDBALL_ADMIN_VIEW_KEY=ランダムな文字列1
+TABLE_TENNIS_ADMIN_VIEW_KEY=ランダムな文字列2
+
+# === 部活パスワード ===
+# 部員に伝えるパスワード
+HANDBALL_CLUB_PASSWORD=部活用パスワード
+TABLE_TENNIS_CLUB_PASSWORD=部活用パスワード
+
+# === スーパー管理者ログイン用パスワード ===
+HANDBALL_SUPER_ADMIN_NICKNAME=admin
+HANDBALL_SUPER_ADMIN_LOGIN_PASSWORD=管理者用パスワード
+TABLE_TENNIS_SUPER_ADMIN_NICKNAME=admin
+TABLE_TENNIS_SUPER_ADMIN_LOGIN_PASSWORD=管理者用パスワード
+
+# === LINE Messaging API（オプション）===
+TABLE_TENNIS_LINE_MESSAGING_API_CHANNEL_ACCESS_TOKEN=
+TABLE_TENNIS_LINE_MESSAGING_API_TARGET_ID=
+
+# === メール通知（オプション）===
+ATTENDANCE_REMINDER_EMAIL_API_KEY=
+ATTENDANCE_REMINDER_EMAIL_FROM=
+RESEND_API_KEY=
+EMAIL_FROM=
+```
+
+ランダムな文字列の生成例（Linux/Mac）:
+
+```bash
+# 32文字のランダム文字列
+openssl rand -hex 16
+
+# 64文字のランダム文字列
+openssl rand -hex 32
+```
+
+#### ステップ4: アプリケーションの起動
+
+```bash
+# 初回ビルド（時間がかかります）
+docker compose pull
+docker compose up -d --build
+
+# Tunnelの起動
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d
+```
+
+#### ステップ5: 起動確認
+
+```bash
+# 全サービスのステータス確認
+docker compose ps
+
+# Tunnelのログ確認
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml logs -f cloudflared
+
+# アプリのログ確認
+docker compose logs -f app
+```
+
+ブラウザで `https://your-domain.example.com` にアクセスし、部活選択画面が表示されることを確認してください。
+
+### 定期メンテナンス
+
+#### デプロイの更新
+
+```bash
+# リポジトリの最新化
+cd /opt/toyota_kosen_club_activities
+git pull
+
+# 新イメージの取得と再起動
+docker compose pull
+docker compose up -d --build
+
+# Tunnelの再起動（設定変更時）
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d --force-recreate cloudflared
+```
+
+#### ログ確認
+
+```bash
+# 全サービスのログ
+docker compose logs
+
+# アプリケーションのログ
+docker compose logs -f app
+
+# Tunnelのログ
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml logs -f cloudflared
+
+# PostgreSQLのログ
+docker compose logs -f postgres
+```
+
+#### アプリの停止
+
+```bash
+# 全サービス停止（データは保持）
+docker compose down
+
+# Tunnelのみ停止
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml down
+
+# 全データ削除（注意！）
+docker compose down -v
+```
+
+### Cloudflare側の設定
+
+Cloudflareダッシュボードで以下を設定推奨：
+
+- **SSL/TLS**: `Full (strict)`
+- **常時HTTPS**: ON
+- **HSTS**: ON（`max-age=31536000`, `includeSubDomains`, `preload`）
+- **WAF Managed Rules**: ON
+- **Bot Fight Mode**: ON
+- **Security Level**: `Medium` 以上
+- **Cache Rule**: `/auth*`, `/admin*`, `/api/*` を Bypass
+
+### トラブルシューティング
+
+#### ビルドが失敗する
+
+```bash
+# キャッシュをクリアして再ビルド
+docker compose build --no-cache
+docker compose up -d
+```
+
+#### Tunnelが接続できない
+
+```bash
+# Tunnelログ確認
+docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml logs cloudflared
+
+# トークンが正しいか確認
+echo $CLOUDFLARE_TUNNEL_TOKEN
+```
+
+#### データベースに接続できない
+
+```bash
+# DBマイグレーションを手動実行
+docker compose exec app npx prisma migrate deploy
+
+# PostgreSQLログ確認
+docker compose logs postgres
+```
+
+#### メモリ不足
+
+Raspberry Piなどでメモリ不足の場合:
+
+```bash
+# ビルド時のメモリ制限を緩和
+docker compose build --build-arg BUILD_NODE_OPTIONS=--max-old-space-size=2048 app
+docker compose up -d
+```
 
 ## 既存データを外部DBからローカルへ移す
 
@@ -67,8 +455,8 @@
 
 ```powershell
 cd toyota_kosen_club_activities
-./scripts/migrate-external-to-local.ps1 \
-  -HandballSourceDatabaseUrl "postgresql://USER:PASSWORD@HOST:5432/DBNAME" \
+./scripts/migrate-external-to-local.ps1 `
+  -HandballSourceDatabaseUrl "postgresql://USER:PASSWORD@HOST:5432/DBNAME" `
   -TableTennisSourceDatabaseUrl "postgresql://USER:PASSWORD@HOST:5432/DBNAME"
 ```
 
@@ -78,30 +466,11 @@ cd toyota_kosen_club_activities
 - 現在のローカルDBを `backups/before-migration-日時/` にバックアップ
 - 外部DBの内容をローカル `handball_notes` / `table_tennis_notes` へ投入
 
-## 起動方法（Raspberry Pi 含む）
+## ローカル開発環境
 
 ```bash
 cd toyota_kosen_club_activities
 docker compose up --build -d
-```
-
-標準の `docker compose up` は省メモリ設定で起動されます。
-
-- PostgreSQL: `shared_buffers=64MB`, `max_connections=40`
-- アプリ (gateway): `NODE_OPTIONS=--max-old-space-size=256`
-- 子アプリ (handball / table-tennis): `--max-old-space-size=384`
-
-Raspberry Pi でビルド時にメモリ不足が起きる場合:
-
-```bash
-docker compose build --build-arg BUILD_NODE_OPTIONS=--max-old-space-size=1024 app
-docker compose up -d
-```
-
-DB 初期化済みで起動時間を短縮したい場合（マイグレーションをスキップ）:
-
-```bash
-RUN_DB_MIGRATIONS=false docker compose up -d
 ```
 
 アクセス先:
@@ -122,20 +491,32 @@ docker compose logs -f app
 
 ## 環境変数（必要に応じて）
 
-`docker-compose.yml` の `app.environment` で変更できます。
+`.env.example` を `.env.tunnel` にコピーして値を設定してください。
 
-- `PUBLIC_BASE_URL`
-- `HANDBALL_ADMIN_VIEW_KEY`
-- `TABLE_TENNIS_ADMIN_VIEW_KEY`
-- `POSTGRES_PASSWORD`
-- `HANDBALL_CLUB_PASSWORD`
-- `TABLE_TENNIS_CLUB_PASSWORD`
-- `HANDBALL_SUPER_ADMIN_LOGIN_PASSWORD`
-- `TABLE_TENNIS_SUPER_ADMIN_LOGIN_PASSWORD`
-- `TABLE_TENNIS_LINE_MESSAGING_API_CHANNEL_ACCESS_TOKEN`
-- `TABLE_TENNIS_LINE_MESSAGING_API_TARGET_ID`
+### 必須設定項目
 
-`.env.example` を `.env` にコピーして値を設定してください。
+| 変数名 | 説明 | 例 |
+|--------|------|-----|
+| `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Tunnelトークン | `eyJhIjoi...` |
+| `PUBLIC_BASE_URL` | 公開URL | `https://example.com` |
+| `POSTGRES_PASSWORD` | PostgreSQLパスワード | 強力なパスワード |
+| `HANDBALL_ADMIN_VIEW_KEY` | ハンドボール管理画面キー | ランダム文字列 |
+| `TABLE_TENNIS_ADMIN_VIEW_KEY` | 卓球管理画面キー | ランダム文字列 |
+| `HANDBALL_CLUB_PASSWORD` | ハンドボール部活パスワード | 部員に伝える値 |
+| `TABLE_TENNIS_CLUB_PASSWORD` | 卓球部活パスワード | 部員に伝える値 |
+| `HANDBALL_SUPER_ADMIN_LOGIN_PASSWORD` | ハンドボール管理者パスワード | 強力なパスワード |
+| `TABLE_TENNIS_SUPER_ADMIN_LOGIN_PASSWORD` | 卓球管理者パスワード | 強力なパスワード |
+
+### オプション設定項目
+
+| 変数名 | 説明 |
+|--------|------|
+| `TABLE_TENNIS_LINE_MESSAGING_API_CHANNEL_ACCESS_TOKEN` | LINE Messaging APIチャントークン |
+| `TABLE_TENNIS_LINE_MESSAGING_API_TARGET_ID` | LINE Messaging API送信先ID |
+| `ATTENDANCE_REMINDER_EMAIL_API_KEY` | 出席リマインダーメールAPIキー |
+| `ATTENDANCE_REMINDER_EMAIL_FROM` | 送信元メールアドレス |
+| `RESEND_API_KEY` | ResendメールAPIキー |
+| `EMAIL_FROM` | メール送信元アドレス |
 
 ## Cloudflare で有効化を推奨する設定
 
@@ -149,37 +530,3 @@ docker compose logs -f app
 - Rate Limiting: `/auth`, `/api/auth/login`, `/api/auth/register` を重点的に制限
 - Zero Trust Access（管理画面保護）: `/admin*` 配下へメール認証などを要求
 - キャッシュ除外: `/auth*`, `/admin*`, `/api/*` を Cache Rule で Bypass
-
-## Cloudflare 公開の最短手順
-
-1. `.env.tunnel.example` を `.env.tunnel` にコピーして編集
-
-```bash
-cp .env.tunnel.example .env.tunnel
-```
-
-`.env.tunnel`:
-
-```env
-CLOUDFLARE_TUNNEL_TOKEN=あなたのトークン
-PUBLIC_BASE_URL=https://toyotakosenclubnotes.cc
-```
-
-1. ローカルサービスを起動
-
-```bash
-docker compose up -d --build
-```
-
-1. Tunnel を起動
-
-```bash
-docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml up -d
-```
-
-1. 確認
-
-```bash
-docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml ps
-docker compose --env-file .env.tunnel -f docker-compose.yml -f docker-compose.tunnel.yml logs -f cloudflared
-```

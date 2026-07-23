@@ -44,6 +44,19 @@ export function ClubTaskBoard({ tasks, redirectTo }: ClubTaskBoardProps) {
           締め切り日
           <input type="date" name="deadlineOn" defaultValue={toDateKey(new Date())} required />
         </label>
+        <label>
+          通知期間（締め切り前日数）
+          <input
+            type="number"
+            name="notificationDaysBefore"
+            defaultValue="14"
+            min="1"
+            max="30"
+            placeholder="例: 14"
+            required
+          />
+          <span className={styles.taskHelpText}>1〜30日の範囲で指定（デフォルト: 2週間前）</span>
+        </label>
         <button type="submit" className={styles.taskPrimaryButton}>タスクを追加</button>
       </form>
 

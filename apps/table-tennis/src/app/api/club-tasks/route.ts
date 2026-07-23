@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
       data: {
         title: parsed.data.title,
         deadlineOn,
+        notificationDaysBefore: parsed.data.notificationDaysBefore ?? 3,
         createdByMemberId: member.id,
       },
     });
