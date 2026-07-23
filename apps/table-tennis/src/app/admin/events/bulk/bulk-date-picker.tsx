@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "../events-management.module.css";
 
@@ -119,6 +119,14 @@ function getJapaneseHolidaySet(year: number): Set<string> {
 export function BulkDatePicker({ defaultDate }: BulkDatePickerProps) {
   const router = useRouter();
   const [eventType, setEventType] = useState<AttendanceEventType>(AttendanceEventType.PRACTICE);
+
+  // グローバルナビゲーションローディングを無効化（ページ遷移エラーによる無限ローディング防止）
+  useEffect(() => {
+    document.body.dataset.disableGlobalNavLoading = "true";
+    return () => {
+      document.body.dataset.disableGlobalNavLoading = "false";
+    };
+  }, []);
   const [monthValue, setMonthValue] = useState(defaultDate.slice(0, 7));
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const todayDateValue = useMemo(() => getTodayJstDateValue(), []);

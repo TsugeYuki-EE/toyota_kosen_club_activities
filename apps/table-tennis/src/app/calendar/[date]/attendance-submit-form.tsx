@@ -105,12 +105,22 @@ export function AttendanceSubmitForm({
         }
       } catch (error) {
         console.error('[ReleaseNotes] Error:', error);
+        // エラーが発生してもローディングは解除（フォームを表示するため）
       } finally {
         setIsLoading(false);
       }
     }, 1000);
 
-    return () => clearTimeout(timer);
+    // 3秒タイムアウト：APIが応答しない場合でもフォームを表示
+    const timeoutTimer = setTimeout(() => {
+      console.log('[ReleaseNotes] Timeout - forcing loading to false');
+      setIsLoading(false);
+    }, 3000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timeoutTimer);
+    };
   }, []);
 
   // モーダルを閉じてlocalStorageに現在の時刻を保存

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { WEEKDAY_DEFAULT_TIME_ROWS } from "@/lib/event-default-times";
 import styles from "../../events-management.module.css";
@@ -59,6 +59,14 @@ export default function BulkStep2Page() {
   const searchParams = useSearchParams();
   const datesParam = searchParams.get("dates");
   const eventTypeParam = searchParams.get("eventType");
+
+  // グローバルナビゲーションローディングを無効化（ページ遷移エラーによる無限ローディング防止）
+  useEffect(() => {
+    document.body.dataset.disableGlobalNavLoading = "true";
+    return () => {
+      document.body.dataset.disableGlobalNavLoading = "false";
+    };
+  }, []);
 
   const selectedDates = useMemo(() => {
     if (!datesParam) return [];
