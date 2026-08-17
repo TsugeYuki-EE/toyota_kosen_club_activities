@@ -6,8 +6,8 @@ import { SiteCredit } from "@/components/site-credit";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Toyota Handball Notes",
-  description: "ハンドボール部の出席・体重・試合スコア管理アプリ",
+  title: "Toyota Kyudo Notes",
+  description: "弓道部の出席・体重・試合記録管理アプリ",
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
         </Suspense>
         <header className="globalBrand" aria-label="共通ヘッダー">
           <Link href="/" className="globalBrandTitle" aria-label="メインページへ戻る">
-            TOYOTA_KOSEN HANDBALL NOTES
+            TOYOTA KOSEN KYUDO NOTES
           </Link>
           <Link href="/help" className="globalReleaseLink">
             ヘルプ

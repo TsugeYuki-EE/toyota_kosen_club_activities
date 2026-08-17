@@ -6,7 +6,7 @@ import { sortMembersByGradeAscending } from "@/lib/member-sort";
 import { AdminMemberTable } from "./admin-member-table";
 import styles from "./admin-dashboard.module.css";
 
-const PRODUCTION_APP_FALLBACK_URL = "https://toyota-handball-notes.onrender.com";
+const PRODUCTION_APP_FALLBACK_URL = "https://toyota-kyudo-notes.onrender.com";
 
 function isLocalOnlyOrigin(value: string): boolean {
   return /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(value);
@@ -70,7 +70,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1>ハンドボール部 管理画面</h1>
+        <h1>弓道部 管理画面</h1>
         <p>部員/マネージャー/コーチ向けの入力データを一元管理します。</p>
         <div className={styles.topLinks}>
           <Link className={styles.linkButton} href="/">

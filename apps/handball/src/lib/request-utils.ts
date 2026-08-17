@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-const PRODUCTION_APP_FALLBACK_URL = "https://toyota-handball-notes.onrender.com";
+const PRODUCTION_APP_FALLBACK_URL = "https://toyota-kyudo-notes.onrender.com";
 
 function normalizeBaseUrl(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;

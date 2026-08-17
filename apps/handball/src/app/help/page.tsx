@@ -4,7 +4,7 @@ import path from "node:path";
 import styles from "./help.module.css";
 
 export const metadata = {
-  title: "ヘルプ | Toyota Handball Notes",
+  title: "ヘルプ | Toyota Kyudo Notes",
   description: "リリースノートと各ページの使い方を確認できます。",
 };
 
