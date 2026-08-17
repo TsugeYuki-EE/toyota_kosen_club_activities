@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getAuthorizedAdminMember } from "@/lib/admin-access";
 import { nowInJst, toDateTimeLocalValue } from "@/lib/date-format";
+import { BulkDatePicker } from "@/components/bulk-date-picker";
 import styles from "../events-management.module.css";
-import { BulkDatePicker } from "../bulk-date-picker";
 
 export const dynamic = "force-dynamic";
 

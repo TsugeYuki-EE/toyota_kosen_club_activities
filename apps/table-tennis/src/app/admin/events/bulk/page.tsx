@@ -13,7 +13,7 @@ function getDefaultDate(): string {
 }
 
 // サーバーコンポーネントとしてデフォルトエクスポート
-export default function BulkPage({ defaultDate }: { defaultDate?: string }) {
-  const today = defaultDate || getDefaultDate();
+export default function BulkPage() {
+  const today = getDefaultDate();
   return <BulkDatePicker defaultDate={today} />;
 }

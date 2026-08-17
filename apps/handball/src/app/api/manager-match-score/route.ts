@@ -134,7 +134,7 @@ let hasPeriodIncidentTableCache: boolean | null = null;
 let hasMatchScoreDraftTableCache: boolean | null = null;
 
 // キャッシュをリセット（新しい migration 適用時等）
-export function resetTableCache() {
+function resetTableCache() {
   hasPeriodIncidentTableCache = null;
   hasMatchScoreDraftTableCache = null;
 }
