@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  padding: 48px 20px 120px;
+  padding: 38px 16px 120px;
   display: grid;
   place-items: center;
 }
@@ -8,34 +8,36 @@
 .main {
   width: min(1100px, 100%);
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
 .announcementWindow {
-  border-radius: 14px;
-  border: 1px solid #e79b9b;
-  background: linear-gradient(180deg, #fff2f2 0%, #ffe9e9 100%);
+  border-radius: 16px;
+  border: 1px solid #ceb89c;
+  background: linear-gradient(160deg, #fff9ef 0%, #f1e5d3 100%);
   padding: 16px;
   display: grid;
   gap: 6px;
 }
 
 .announcementWindow h2 {
-  color: #8a1414;
+  color: #5d4430;
   font-size: 18px;
 }
 
 .announcementWindow p {
-  color: #6f1010;
+  color: #3c322a;
   line-height: 1.7;
   white-space: pre-wrap;
 }
 
 .hero {
-  background: linear-gradient(140deg, #f7fbff 0%, #e7fff5 100%);
-  border: 1px solid #d9e6ef;
-  border-radius: 16px;
-  padding: 24px;
+  background:
+    radial-gradient(720px 260px at 0% 0%, rgba(242, 226, 190, 0.45) 0%, rgba(242, 226, 190, 0) 70%),
+    linear-gradient(142deg, #fffdf7 0%, #f2f9f3 100%);
+  border: 1px solid #d4c8b0;
+  border-radius: 20px;
+  padding: 22px;
   display: grid;
   gap: 10px;
 }
@@ -50,11 +52,11 @@
 
 .hero h1 {
   font-size: clamp(26px, 5vw, 38px);
-  color: #193042;
+  color: #1f3f36;
 }
 
 .hero p {
-  color: #284358;
+  color: #42514c;
   line-height: 1.7;
 }
 
@@ -65,7 +67,7 @@
 }
 
 .heroGoalTitle {
-  color: #193042;
+  color: #294b40;
   font-size: 18px;
 }
 
@@ -194,10 +196,10 @@
 }
 
 .calendarCard {
-  background: #ffffff;
-  border: 1px solid #d8e0e7;
-  border-radius: 16px;
-  padding: 24px;
+  background: #fffdf8;
+  border: 1px solid #d9cfbd;
+  border-radius: 20px;
+  padding: 20px;
   display: grid;
   gap: 14px;
 }
@@ -214,15 +216,15 @@
   min-height: 44px;
   padding: 10px 18px;
   border-radius: 999px;
-  border: 1px solid #173246;
-  background: #173246;
+  border: 1px solid #2f5d50;
+  background: #2f5d50;
   color: #ffffff;
   font-weight: 700;
 }
 
 .feedbackButton:hover {
-  background: #0f4d72;
-  border-color: #0f4d72;
+  background: #24483e;
+  border-color: #24483e;
 }
 
 .goalCard {
@@ -245,10 +247,10 @@
 }
 
 .goalItem {
-  border: 1px solid #dbe4ec;
-  border-radius: 12px;
+  border: 1px solid #d8cebc;
+  border-radius: 14px;
   padding: 12px;
-  background: #fbfdff;
+  background: #fffef9;
   display: grid;
   gap: 8px;
 }
@@ -281,9 +283,9 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  border: 1px solid #bfd2df;
-  background: #f5fbff;
-  color: #173246;
+  border: 1px solid #c5b79f;
+  background: #fdf9f0;
+  color: #345a4e;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -291,8 +293,8 @@
 }
 
 .monthButton:hover {
-  border-color: #8eb5cd;
-  background: #ecf5fb;
+  border-color: #ab9a7f;
+  background: #f6eedf;
 }
 
 .calendarHeader h2 {
@@ -329,17 +331,17 @@
 
 .dayCell {
   min-height: 116px;
-  border: 1px solid #dfe7ed;
-  border-radius: 12px;
+  border: 1px solid #e0d6c4;
+  border-radius: 14px;
   padding: 10px;
   display: grid;
   gap: 8px;
   align-content: start;
-  background: #fbfdff;
+  background: #fffefb;
 }
 
 .dayCell:hover {
-  border-color: #8eb5cd;
+  border-color: #ac9d86;
 }
 
 .outsideMonth {
@@ -347,21 +349,21 @@
 }
 
 .today {
-  border-color: #0f4d72;
-  background: #eff8fe;
+  border-color: #2f5d50;
+  background: #edf7f0;
 }
 
 .dayCellHoliday {
-  background: #fff5f5;
+  background: #fff6ee;
 }
 
 .dayCellSaturday {
-  background: #f4f8ff;
+  background: #f4f8f8;
 }
 
 .dayNumber {
   font-weight: 700;
-  color: #173246;
+  color: #2b4039;
 }
 
 .dayNumberHoliday {
@@ -428,9 +430,9 @@
   display: inline-block;
   font-size: 12px;
   line-height: 1.4;
-  color: #23455c;
-  background: #e7f2f9;
-  border: 1px solid #b7cfdd;
+  color: #324743;
+  background: #e9f1ed;
+  border: 1px solid #bfd2cb;
   border-radius: 999px;
   padding: 4px 8px;
   overflow: hidden;
@@ -439,15 +441,15 @@
 }
 
 .badgePractice {
-  background: #d6f0df;
-  border-color: #3a8e5e;
-  color: #0f4d2b;
+  background: #dbeee5;
+  border-color: #4d7e6d;
+  color: #204739;
 }
 
 .badgeMatch {
-  background: #f9dede;
-  border-color: #c15a5a;
-  color: #7f1e1e;
+  background: #efe2d0;
+  border-color: #ad8b62;
+  color: #6b5132;
 }
 
 .more {

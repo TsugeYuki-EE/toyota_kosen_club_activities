@@ -1,6 +1,11 @@
 :root {
-  --background: #ffffff;
-  --foreground: #142837;
+  --background: #f7f3ea;
+  --foreground: #1d2a27;
+  --surface: #fffdf7;
+  --surface-border: #d4c8b0;
+  --accent: #2f5d50;
+  --accent-strong: #1f3f36;
+  --muted: #5f6b66;
 }
 
 html,
@@ -11,8 +16,11 @@ body {
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: var(--font-geist-sans), "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+  background:
+    radial-gradient(1200px 420px at 18% -8%, #efe2ca 0%, rgba(239, 226, 202, 0) 68%),
+    radial-gradient(900px 360px at 95% 2%, #dce8df 0%, rgba(220, 232, 223, 0) 72%),
+    var(--background);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   padding-top: 64px;
@@ -28,12 +36,12 @@ body {
 .globalFooter {
   position: relative;
   z-index: 40;
-  border-top: 1px solid #d7e1e8;
-  color: #4f6675;
+  border-top: 1px solid var(--surface-border);
+  color: var(--muted);
   font-size: 12px;
   text-align: center;
   padding: 14px 12px 18px;
-  background: #ffffff;
+  background: color-mix(in srgb, var(--surface) 94%, #ffffff 6%);
 }
 
 .globalBrand {
@@ -47,29 +55,45 @@ body {
   align-items: center;
   min-height: 52px;
   padding: 10px 18px;
-  border-bottom: 1px solid #cbd9e2;
-  background: #ffffff;
-  box-shadow: 0 10px 14px -14px rgba(18, 48, 66, 0.55), 0 6px 10px -12px rgba(18, 48, 66, 0.4);
+  border-bottom: 1px solid var(--surface-border);
+  background: color-mix(in srgb, var(--surface) 90%, #ffffff 10%);
+  box-shadow: 0 12px 24px -22px rgba(30, 52, 45, 0.55), 0 8px 12px -16px rgba(30, 52, 45, 0.35);
   transition: background-color 0.16s ease;
+  backdrop-filter: saturate(115%) blur(5px);
 }
 
 .globalBrandTitle {
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   font-size: 16px;
-  color: #2f4d61;
+  color: var(--accent-strong);
   font-weight: 700;
 }
 
 .globalReleaseLink {
   font-size: 13px;
-  color: #1976d2;
-  font-weight: 500;
+  color: var(--accent);
+  font-weight: 700;
   line-height: 1.2;
 }
 
 .globalBrand:hover {
-  background: #f9fcff;
+  background: color-mix(in srgb, var(--surface) 82%, #ffffff 18%);
+}
+
+.appContent {
+  animation: fade-rise 360ms ease;
+}
+
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 * {
