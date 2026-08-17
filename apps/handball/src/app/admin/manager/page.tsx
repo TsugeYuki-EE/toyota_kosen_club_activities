@@ -131,6 +131,18 @@ export default async function AdminManagerPage() {
           </Link>
         </div>
       </section>
+
+      <section className={styles.card}>
+        <div className={styles.cardHeader}>
+          <div>
+            <h2>目標管理</h2>
+            <p className={styles.meta}>全部員の年間目標・月間目標を確認できます。</p>
+          </div>
+        </div>
+        <Link className={styles.linkButton} href="/admin/manager/goals">
+          目標一覧を開く
+        </Link>
+      </section>
     </main>
   );
 }
