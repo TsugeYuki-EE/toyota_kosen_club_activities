@@ -1,5 +1,5 @@
 services:
-  handball-notes:
+  kyudo-notes:
     build:
       context: .
       dockerfile: Dockerfile
@@ -7,5 +7,5 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      ADMIN_VIEW_KEY: ${ADMIN_VIEW_KEY:-toyota-handball-admin}
+      ADMIN_VIEW_KEY: ${ADMIN_VIEW_KEY:-toyota-kyudo-admin}
       NEXT_PUBLIC_APP_BASE_URL: ${NEXT_PUBLIC_APP_BASE_URL:-http://localhost:3000}

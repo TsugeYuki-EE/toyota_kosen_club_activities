@@ -73,7 +73,7 @@ export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackP
   const peerFeedbacks = peerFeedbacksRaw as SharedFeedback[];
 
   const mergedFeedbacks = [
-    ...localFeedbacks.map((item) => ({ ...item, source: "ハンドボール" })),
+    ...localFeedbacks.map((item) => ({ ...item, source: "弓道" })),
     ...peerFeedbacks.map((item) => ({ ...item, source: "卓球" })),
   ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 

@@ -389,7 +389,7 @@ app.get("/", (req, res, next) => {
 		return;
 	}
 
-	const selectedLabel = selected === HAND ? "現在はハンドボールを選択中" : selected === TT ? "現在は卓球を選択中" : "まだ未選択です";
+	const selectedLabel = selected === HAND ? "現在は弓道を選択中" : selected === TT ? "現在は卓球を選択中" : "まだ未選択です";
 
 	res.status(200).type("html").send(`<!doctype html>
 <html lang="ja">
@@ -399,19 +399,68 @@ app.get("/", (req, res, next) => {
 	<title>Toyota Kosen Club Activities</title>
 	<style>
 		:root { color-scheme: light; }
-		body { margin: 0; font-family: "Segoe UI", sans-serif; background: linear-gradient(135deg, #f9fbff, #e8f1ff); color: #13233a; }
-		main { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-		.card { width: min(520px, 100%); background: rgba(255,255,255,0.95); border-radius: 20px; box-shadow: 0 18px 50px rgba(19,35,58,0.12); padding: 28px; }
-		h1 { margin: 0 0 10px; font-size: 1.6rem; }
-		p { margin: 0 0 12px; line-height: 1.6; }
-		.status { margin: 0 0 20px; font-weight: 600; color: #24508b; }
+		body {
+			margin: 0;
+			font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+			color: #1d1a16;
+			background:
+				radial-gradient(circle at 15% 0%, #f6ecdc 0%, transparent 38%),
+				radial-gradient(circle at 100% 0%, #e7efe0 0%, transparent 42%),
+				linear-gradient(160deg, #f8f5ef 0%, #f2eadf 52%, #ede4d6 100%);
+		}
+		main { min-height: 100vh; display: grid; place-items: center; padding: 28px 16px; }
+		.card {
+			width: min(560px, 100%);
+			background: rgba(255, 251, 245, 0.92);
+			border: 1px solid rgba(124, 94, 52, 0.24);
+			border-radius: 24px;
+			box-shadow: 0 24px 54px rgba(52, 40, 22, 0.16);
+			padding: 30px 24px;
+		}
+		h1 { margin: 0 0 10px; font-size: 1.7rem; letter-spacing: 0.02em; }
+		p { margin: 0 0 12px; line-height: 1.7; }
+		.status {
+			margin: 0 0 20px;
+			font-weight: 700;
+			color: #7a4b1b;
+			background: rgba(247, 224, 189, 0.55);
+			padding: 8px 12px;
+			border-radius: 10px;
+		}
 		form { display: grid; gap: 12px; }
-		button { border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 700; cursor: pointer; }
+		button {
+			border: 0;
+			border-radius: 14px;
+			padding: 13px 14px;
+			font-weight: 700;
+			font-size: 0.98rem;
+			cursor: pointer;
+			transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+		}
+		button:hover { transform: translateY(-1px); filter: brightness(1.03); }
+		button:active { transform: translateY(0); }
 		.sportButton { display: flex; align-items: center; justify-content: center; gap: 10px; }
 		.sportLogo { width: 28px; height: 28px; object-fit: contain; }
-		.hand { background: #ffffff; color: #2f4d61; border: 1px solid #cbd9e2; }
-		.tt { background: linear-gradient(120deg, #170f11 0%, #2c0f17 56%, #3a121b 100%); color: #fff2f4; }
-		.go { background: #1e40af; color: #fff; margin-top: 8px; width: 100%; }
+		.hand {
+			background: linear-gradient(135deg, #efe0c3 0%, #d9be90 58%, #c79b5f 100%);
+			color: #2d1b0d;
+			box-shadow: 0 8px 18px rgba(121, 85, 40, 0.28);
+		}
+		.tt {
+			background: linear-gradient(120deg, #14263b 0%, #1e3853 56%, #2a4d70 100%);
+			color: #f5fbff;
+			box-shadow: 0 8px 18px rgba(20, 38, 59, 0.26);
+		}
+		.go {
+			background: #2d6a4f;
+			color: #fff;
+			margin-top: 10px;
+			width: 100%;
+		}
+		@media (max-width: 480px) {
+			.card { padding: 24px 18px; border-radius: 18px; }
+			h1 { font-size: 1.45rem; }
+		}
 	</style>
 </head>
 <body>
@@ -421,7 +470,7 @@ app.get("/", (req, res, next) => {
 			<p>最初に利用する部活を選択してください。選択後は同じURLで各アプリのログインページへ遷移します。</p>
 			<p class="status">${selectedLabel}</p>
 			<form action="/select" method="post">
-				<button class="hand sportButton" type="submit" name="sport" value="${HAND}">ハンドボール</button>
+				<button class="hand sportButton" type="submit" name="sport" value="${HAND}">弓道</button>
 				<button class="tt sportButton" type="submit" name="sport" value="${TT}"><img class="sportLogo" src="/assets/table-tennis/table-tennis-logo.svg" alt="" aria-hidden="true" />卓球</button>
 			</form>
 			${selected ? "<form action=\"/auth\" method=\"get\"><button class=\"go\" type=\"submit\">選択中のアプリへ進む</button></form>" : ""}

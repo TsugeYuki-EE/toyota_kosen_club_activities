@@ -129,7 +129,7 @@ export function NavigationLoadingOverlay() {
     <>
       <div className={styles.overlay} aria-live="polite" aria-busy="true">
         <section className={styles.panel} role="status" aria-label="ページを読み込み中です">
-          <h2 className={styles.title}>TOYOTA_KOSEN HANDBALL NOTES</h2>
+          <h2 className={styles.title}>TOYOTA KOSEN KYUDO NOTES</h2>
           <div className={styles.spinner} aria-hidden="true" />
           <p className={styles.label}>読み込み中...</p>
         </section>

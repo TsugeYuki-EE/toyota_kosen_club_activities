@@ -17,7 +17,7 @@ COPY . .
 
 # Docker build 中は仮の設定で Next.js をビルドします。
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres?schema=public
-ENV ADMIN_VIEW_KEY=toyota-handball-admin
+ENV ADMIN_VIEW_KEY=toyota-kyudo-admin
 ENV NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=1536

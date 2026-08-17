@@ -3,7 +3,7 @@ import { LocalDateTime } from "@/components/local-date-time";
 import styles from "./release-notes.module.css";
 
 export const metadata = {
-  title: "リリースノート | Toyota Handball Notes",
+  title: "リリースノート | Toyota Kyudo Notes",
   description: "アプリケーションのリリース履歴とアップデート情報を確認できます。",
 };
 

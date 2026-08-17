@@ -990,7 +990,7 @@ export function MatchScoreClient({
         || (mode === "input" && isSubmitting && phase !== "SETUP")) ? (
         <div className={styles.blockingLoadingOverlay} aria-live="polite" aria-busy="true">
           <section className={styles.blockingLoadingPanel} role="status" aria-label={isSubmitting ? "試合結果を送信中です" : "ページを読み込み中です"}>
-            <h2 className={styles.blockingLoadingTitle}>TOYOTA_KOSEN HANDBALL NOTES</h2>
+            <h2 className={styles.blockingLoadingTitle}>TOYOTA KOSEN KYUDO NOTES</h2>
             <div className={styles.blockingLoadingSpinner} aria-hidden="true" />
             <p className={styles.blockingLoadingLabel}>{isSubmitting ? "試合結果を送信中..." : "読み込み中..."}</p>
           </section>

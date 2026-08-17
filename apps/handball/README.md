@@ -1,6 +1,6 @@
-# Toyota Handball Notes
+# Toyota Kyudo Notes
 
-ハンドボール部向けの管理アプリです。
+弓道部向けの管理アプリです。
 部員・マネージャー・コーチ・管理者が、出席、体重、試合スコア、目標、連絡事項を一元管理できます。
 
 ## 主な機能
@@ -125,7 +125,7 @@ npm install
 
 ```env
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public
-ADMIN_VIEW_KEY=toyota-handball-admin
+ADMIN_VIEW_KEY=toyota-kyudo-admin
 NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 ```
 
