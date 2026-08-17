@@ -84,7 +84,7 @@ COPY --from=builder /workspace/apps/handball/prisma.config.ts ./apps/handball/pr
 COPY --from=builder /workspace/apps/handball/prisma ./apps/handball/prisma
 COPY --from=builder /workspace/apps/handball/public ./apps/handball/public
 COPY --from=builder /workspace/apps/handball/.next/standalone ./apps/handball/.next/standalone
-COPY --from=builder /workspace/apps/handball/.next/static ./apps/handball/.next/standalone/.next/static
+COPY --from=builder /workspace/apps/handball/.next/static ./apps/handball/.next/standalone/apps/handball/.next/static
 COPY --from=builder /workspace/apps/handball/public ./apps/handball/.next/standalone/public
 
 COPY --from=builder /workspace/apps/table-tennis/package.json ./apps/table-tennis/package.json
@@ -92,7 +92,7 @@ COPY --from=builder /workspace/apps/table-tennis/prisma.config.ts ./apps/table-t
 COPY --from=builder /workspace/apps/table-tennis/prisma ./apps/table-tennis/prisma
 COPY --from=builder /workspace/apps/table-tennis/public ./apps/table-tennis/public
 COPY --from=builder /workspace/apps/table-tennis/.next/standalone ./apps/table-tennis/.next/standalone
-COPY --from=builder /workspace/apps/table-tennis/.next/static ./apps/table-tennis/.next/standalone/.next/static
+COPY --from=builder /workspace/apps/table-tennis/.next/static ./apps/table-tennis/.next/standalone/apps/table-tennis/.next/static
 COPY --from=builder /workspace/apps/table-tennis/public ./apps/table-tennis/.next/standalone/public
 
 EXPOSE 3000
