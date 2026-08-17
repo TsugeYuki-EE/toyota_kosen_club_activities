@@ -20,7 +20,7 @@ body {
     radial-gradient(1200px 420px at 18% -8%, #efe2ca 0%, rgba(239, 226, 202, 0) 68%),
     radial-gradient(900px 360px at 95% 2%, #dce8df 0%, rgba(220, 232, 223, 0) 72%),
     var(--background);
-  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: var(--font-geist-sans), "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   padding-top: 64px;

@@ -3,7 +3,7 @@
   display: grid;
   place-items: center;
   padding: 24px 24px 86px;
-  background: linear-gradient(180deg, #f8fcff 0%, #ffffff 46%);
+  background: transparent;
 }
 
 .loadingCard {
@@ -34,6 +34,26 @@
 .label {
   color: #4f6675;
   font-size: 14px;
+}
+
+.loadingPage {
+  background:
+    radial-gradient(900px 360px at 12% -8%, #efe2ca 0%, rgba(239, 226, 202, 0) 72%),
+    radial-gradient(760px 320px at 96% 4%, #dce8df 0%, rgba(220, 232, 223, 0) 72%),
+    var(--background);
+}
+
+.brandTitle {
+  color: var(--accent-strong);
+}
+
+.spinner {
+  border-color: #d4c8b0;
+  border-top-color: var(--accent);
+}
+
+.label {
+  color: var(--muted);
 }
 
 @keyframes loading-spin {

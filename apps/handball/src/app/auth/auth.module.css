@@ -3,7 +3,7 @@
   padding: 28px 18px;
   display: grid;
   place-items: center;
-  background: linear-gradient(160deg, #f6fbff 0%, #eef7ff 45%, #fefcf5 100%);
+  background: transparent;
 }
 
 .main {
@@ -213,4 +213,41 @@
 .secondaryButton {
   background: #ffffff;
   color: #173246;
+}
+
+.page {
+  background:
+    radial-gradient(900px 360px at 12% -8%, #efe2ca 0%, rgba(239, 226, 202, 0) 72%),
+    radial-gradient(760px 320px at 96% 4%, #dce8df 0%, rgba(220, 232, 223, 0) 72%),
+    var(--background);
+}
+
+.header,
+.card,
+.modalCard {
+  background: var(--surface);
+  border-color: var(--surface-border);
+}
+
+.header h1,
+.card h2,
+.modalCard h3,
+.form button,
+.primaryButton {
+  color: var(--accent-strong);
+}
+
+.form button,
+.primaryButton {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #fffdf7;
+}
+
+.togglePasswordButton,
+.backToSelectLink,
+.secondaryButton {
+  color: var(--accent-strong);
+  border-color: var(--surface-border);
+  background: var(--surface);
 }

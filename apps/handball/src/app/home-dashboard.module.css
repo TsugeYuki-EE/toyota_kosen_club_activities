@@ -14,7 +14,7 @@
 .announcementWindow {
   border-radius: 16px;
   border: 1px solid #ceb89c;
-  background: linear-gradient(160deg, #fff9ef 0%, #f1e5d3 100%);
+  background: transparent;
   padding: 16px;
   display: grid;
   gap: 6px;
@@ -530,7 +530,7 @@
 .barFill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2f7da8 0%, #68b7df 100%);
+  background: linear-gradient(90deg, #2f5d50 0%, #6f9f86 100%);
 }
 
 .empty {
@@ -578,7 +578,7 @@
 }
 
 .timerTabActive {
-  background: linear-gradient(135deg, #193042 0%, #28516f 100%);
+  background: linear-gradient(135deg, #1f3f36 0%, #2f5d50 100%);
   color: #ffffff;
   border-color: #193042;
 }
@@ -661,7 +661,7 @@
 }
 
 .primaryButton {
-  background: linear-gradient(135deg, #173246 0%, #2f7da8 100%);
+  background: linear-gradient(135deg, #1f3f36 0%, #2f5d50 100%);
   color: #ffffff;
   border-color: #173246;
 }
@@ -721,7 +721,7 @@
 .timerProgressFill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #2f7da8 0%, #68b7df 100%);
+  background: linear-gradient(90deg, #2f5d50 0%, #6f9f86 100%);
 }
 
 .timerCardActions {

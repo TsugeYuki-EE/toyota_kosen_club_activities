@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   padding: 28px 18px 72px;
-  background: linear-gradient(180deg, #f5fbff 0%, #ffffff 40%);
+  background: transparent;
   display: grid;
   gap: 16px;
 }
@@ -200,7 +200,7 @@
   padding: 0 16px;
   border-radius: 8px;
   border: none;
-  background: linear-gradient(135deg, #0078d4 0%, #0063b0 100%);
+  background: linear-gradient(135deg, #1f3f36 0%, #2f5d50 100%);
   color: #ffffff;
   font-weight: 700;
   font-size: 14px;
@@ -211,7 +211,7 @@
 }
 
 .button:hover {
-  background: linear-gradient(135deg, #1084e0 0%, #0070c0 100%);
+  background: linear-gradient(135deg, #2f5d50 0%, #6f9f86 100%);
   box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
   transform: translateY(-1px);
 }

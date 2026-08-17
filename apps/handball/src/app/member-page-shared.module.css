@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   padding: 28px 18px 60px;
-  background: linear-gradient(180deg, #f5fbff 0%, #ffffff 40%);
+  background: transparent;
   display: grid;
   gap: 18px;
 }
@@ -274,6 +274,31 @@
 
 .empty {
   color: #5a7588;
+}
+
+.page {
+  background:
+    radial-gradient(900px 360px at 12% -8%, #efe2ca 0%, rgba(239, 226, 202, 0) 72%),
+    radial-gradient(760px 320px at 96% 4%, #dce8df 0%, rgba(220, 232, 223, 0) 72%),
+    var(--background);
+}
+
+.header h1,
+.dayNumber,
+.eventTitle,
+.itemTitle {
+  color: var(--accent-strong);
+}
+
+.card,
+.dayCell {
+  background: var(--surface);
+  border-color: var(--surface-border);
+}
+
+.todayCell {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface) 84%, #dce8df 16%);
 }
 
 .memberTableWrap {
